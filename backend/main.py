@@ -106,6 +106,7 @@ def create_profile(profile_data: UserProfileCreate, db: Session = Depends(get_db
         user_id=profile_data.user_id,
         real_name=profile_data.real_name,
         gender=profile_data.gender,
+        school=profile_data.school,
         major=profile_data.major,
         grade=profile_data.grade,
         age=profile_data.age,

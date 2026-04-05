@@ -25,6 +25,7 @@ class UserProfileCreate(BaseModel):
     user_id: int
     real_name: Optional[str] = None
     gender: Optional[str] = None
+    school: Optional[str] = None
     major: Optional[str] = None
     grade: Optional[str] = None
     age: Optional[int] = None
@@ -36,6 +37,7 @@ class UserProfileCreate(BaseModel):
 class UserProfileUpdate(BaseModel):
     real_name: Optional[str] = None
     gender: Optional[str] = None
+    school: Optional[str] = None
     major: Optional[str] = None
     grade: Optional[str] = None
     age: Optional[int] = None
@@ -50,6 +52,7 @@ class UserProfileResponse(BaseModel):
     avatar: Optional[str] = None
     real_name: Optional[str] = None
     gender: Optional[str] = None
+    school: Optional[str] = None
     major: Optional[str] = None
     grade: Optional[str] = None
     age: Optional[int] = None

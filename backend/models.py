@@ -27,6 +27,7 @@ class UserProfile(Base):
     avatar = Column(String(255), nullable=True)
     real_name = Column(String(50), nullable=True)
     gender = Column(String(10), nullable=True)
+    school = Column(String(100), nullable=True)
     major = Column(String(100), nullable=True)
     grade = Column(String(50), nullable=True)
     age = Column(Integer, nullable=True)
