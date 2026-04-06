@@ -63,8 +63,7 @@
     <!-- 登录区 -->
     <div ref="loginRef">
       <LoginSection
-        :functionRef="functionRef"
-        :onLoginSuccess="resetCardsExpanded"
+          @login-success="handleLoginSuccess"
       />
     </div>
 
@@ -312,6 +311,23 @@ const handleIntroProgress = () => {
 const strip1Width = computed(() => `${100 - 50 * stripProgress.value}%`)
 const strip2Width = computed(() => `${100 - 34 * stripProgress.value}%`)
 const strip3Width = computed(() => `${100 - 17 * stripProgress.value}%`)
+// 登录成功：解锁功能区 + 自动展开 + 自动滚动
+const handleLoginSuccess = () => {
+  setTimeout(() => {
+    // 滚动到功能区
+    functionRef.value?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    })
+    // 自动展开卡片
+    cardsExpanded.value = true
+  }, 500)
+}
+
+// —————————— 刷新自动关闭卡片 ——————————
+onMounted(() => {
+  cardsExpanded.value = false
+})
 
 /* =========================
    功能卡片数据
