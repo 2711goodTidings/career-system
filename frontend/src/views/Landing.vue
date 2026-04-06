@@ -61,24 +61,12 @@
     </section>
 
     <!-- 登录区 -->
-    <section class="section login-section" ref="loginRef">
-      <div class="login-left">
-        <h2>登录系统</h2>
-        <p>登录后解锁功能区与 AI 规划区</p>
-      </div>
-
-      <div class="login-right">
-        <div class="login-form">
-          <input type="text" placeholder="Username" />
-          <input type="password" placeholder="Password" />
-
-          <div class="login-actions">
-            <button class="login-btn" @click="handleLogin">LOGIN</button>
-            <button class="register-btn" @click="goRegister">REGISTER</button>
-          </div>
-        </div>
-      </div>
-    </section>
+    <div ref="loginRef">
+      <LoginSection
+        :functionRef="functionRef"
+        :onLoginSuccess="resetCardsExpanded"
+      />
+    </div>
 
     <!-- 未登录提示区 -->
     <section v-if="!userStore.isLogin" class="unlock-section">
@@ -92,7 +80,6 @@
 
         <div class="unlock-actions">
           <button class="login-btn" @click="scrollToLogin">GO TO LOGIN</button>
-          <button class="register-btn" @click="goRegister">REGISTER NOW</button>
         </div>
       </div>
     </section>
@@ -161,10 +148,11 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onBeforeUnmount, ref, nextTick } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import diceLogo from '../assets/dice-logo.png'
+import LoginSection from '../components/LoginSection.vue'
 
 const userStore = useUserStore()
 const router = useRouter()
@@ -177,22 +165,9 @@ const functionRef = ref(null)
 
 const cardsExpanded = ref(false)
 
-const handleLogin = async () => {
-  userStore.login()
+const resetCardsExpanded = () => {
   cardsExpanded.value = false
-
-  await nextTick()
-
-  functionRef.value?.scrollIntoView({
-    behavior: 'smooth',
-    block: 'start'
-  })
 }
-
-const goRegister = () => {
-  router.push('/register')
-}
-
 const scrollToLogin = () => {
   loginRef.value?.scrollIntoView({
     behavior: 'smooth',
@@ -637,47 +612,6 @@ onBeforeUnmount(() => {
 .strip-2 { bottom: 150px; }
 .strip-3 { bottom: 300px; }
 
-/* 登录区 */
-.login-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  gap: 40px;
-  padding: 80px 60px;
-  background: #d9d6d1;
-}
-
-.login-left h2 {
-  font-size: 56px;
-  color: #35568a;
-  margin-bottom: 16px;
-}
-
-.login-left p {
-  color: #35568a;
-  font-size: 18px;
-}
-
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  max-width: 420px;
-}
-
-.login-form input {
-  padding: 16px 12px;
-  border: none;
-  border-bottom: 1px solid #35568a;
-  outline: none;
-  background: transparent;
-  color: #35568a;
-  font-size: 16px;
-}
-
-.login-form input::placeholder {
-  color: rgba(53, 86, 138, 0.55);
-}
 
 .login-actions,
 .unlock-actions {
@@ -702,23 +636,7 @@ onBeforeUnmount(() => {
   box-shadow: 0 12px 24px rgba(53, 86, 138, 0.18);
 }
 
-.register-btn {
-  padding: 14px 26px;
-  border: 1px solid #35568a;
-  background: transparent;
-  color: #35568a;
-  font-size: 14px;
-  letter-spacing: 1px;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
 
-.register-btn:hover {
-  transform: translateY(-2px);
-  background: #35568a;
-  color: white;
-  box-shadow: 0 12px 24px rgba(53, 86, 138, 0.12);
-}
 
 /* 未登录提示区 */
 .unlock-section {
@@ -1038,10 +956,6 @@ onBeforeUnmount(() => {
     bottom: 42px;
   }
 
-  .login-section {
-    grid-template-columns: 1fr;
-  }
-
   .intro-text {
     width: 48%;
     font-size: 18px;
@@ -1127,15 +1041,6 @@ onBeforeUnmount(() => {
     padding-right: 12px;
   }
 
-  .login-section {
-    padding: 60px 24px;
-  }
-
-  .login-left h2 {
-    font-size: 40px;
-  }
-
-  .login-actions,
   .unlock-actions {
     flex-direction: column;
   }
