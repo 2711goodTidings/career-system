@@ -434,8 +434,8 @@ onBeforeUnmount(() => {
   background: #35568a;
   backdrop-filter: blur(8px);
   border-radius: 0;
-  height: 40px;
-  width: 300px;
+  height: 60px;
+  width: 310px;
   box-shadow:
     0 6px 20px rgba(0,0,0,0.15),
     inset 0 1px 0 rgba(255,255,255,0.08);
@@ -471,7 +471,9 @@ onBeforeUnmount(() => {
 /* HERO */
 .hero-section {
   min-height: 100vh;
-  background: #8b9bc1;
+  background:
+    linear-gradient(rgba(131, 72, 120, 0.58), rgba(131, 72, 120, 0.58)),
+    url('../public/images/head.jpg') center center / cover no-repeat;
 }
 
 .hero-glow {
@@ -620,7 +622,7 @@ onBeforeUnmount(() => {
   right: 0;
   height: 150px;
   width: 100%;
-  background: #8b9bc1;
+  background: #834878;
   transition: width 0.08s linear;
 }
 

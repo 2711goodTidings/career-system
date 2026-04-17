@@ -11,3 +11,5 @@ dist/
 .idea/
 backend/.env
 .env
+*.lnk
+*.db

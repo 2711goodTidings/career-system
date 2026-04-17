@@ -1,663 +1,1009 @@
 <template>
   <div class="profile-page">
-    <div class="profile-wrap">
-      <!-- 左侧头像海报区 -->
-      <section class="poster-panel">
-        <div class="stripe-group">
-          <span v-for="i in 6" :key="i" class="stripe"></span>
-        </div>
+    <button class="back-btn" @click="goHome">BACK HOME</button>
 
-        <div class="poster poster-back">
-          <div class="poster-text top">PERSONAL</div>
-        </div>
-
-        <div class="poster poster-middle">
-          <div class="poster-text center">PROFILE</div>
-        </div>
-
-        <div class="poster poster-front">
-          <div class="avatar-box">
-            <img
-              v-if="avatarPreview || profile.avatar"
-              :src="avatarPreview || avatarUrl"
-              alt="avatar"
-              class="avatar-img"
-            />
-            <div v-else class="avatar-placeholder">
-              <span>头像</span>
+    <div class="story-container" ref="storyContainerRef">
+      <!-- 第一屏 -->
+      <section class="story-section hero-section">
+        <div class="hero-card">
+          <div class="hero-top">
+            <div class="hero-date">2/0/2/6 / CAREER PLAN</div>
+            <div class="hero-note">
+              {{ form.bio || '填写你的个人简介' }}
             </div>
           </div>
 
-          <div class="poster-footer">
-            <p class="poster-name">{{ profile.real_name || "未填写姓名" }}</p>
-            <p class="poster-major">
-              {{ profile.school || "未填写学校" }} {{ profile.major ? `· ${profile.major}` : "" }}
-            </p>
+          <div class="hero-center">
+            <div class="hero-image-target" ref="heroImageTargetRef"></div>
 
-            <label class="upload-btn">
-              选择头像
-              <input type="file" accept="image/*" @change="handleFileChange" hidden />
-            </label>
-
-            <button class="save-avatar-btn" @click="uploadAvatar" :disabled="!selectedFile || loading">
-              上传头像
-            </button>
+            <h1
+              class="hero-title"
+              :style="{
+                opacity: heroTitleOpacity,
+                transform: `translate(-50%, calc(-20% + ${heroProgress * -24}px))`
+              }"
+            >
+              PROFILE REPORT
+            </h1>
           </div>
+
+          <div class="hero-summary" :style="{ opacity: 1 - heroProgress * 1.2 }">
+            <p><strong>姓名：</strong>{{ form.username || '未填写' }}</p>
+            <p><strong>学校：</strong>{{ form.school || '未填写' }}</p>
+            <p><strong>专业：</strong>{{ form.major || '未填写' }}</p>
+          </div>
+        </div>
+
+        <div class="scroll-tip" :style="{ opacity: 1 - heroProgress * 1.4 }">
+          SCROLL TO EDIT
         </div>
       </section>
 
-      <!-- 右侧表单区 -->
-      <section class="info-panel">
-        <div class="panel-header">
-          <div>
-            <p class="sub-title">SMART CAREER PLANNING</p>
-            <h1>个人信息</h1>
+      <!-- 第二屏 -->
+      <section class="story-section edit-section">
+        <div class="edit-stage">
+          <div class="edit-left">
+            <div class="edit-image-frame">
+              <p class="left-top-text">MY PROFILE</p>
+              <div class="edit-image-target" ref="editImageTargetRef">
+                <label class="change-avatar-btn">
+                  更换头像
+                  <input
+                    type="file"
+                    accept="image/*"
+                    @change="handleAvatarChange"
+                    class="hidden-input"
+                  />
+                </label>
+              </div>
+            </div>
           </div>
-          <div class="status-text">
-            {{ hasProfile ? "资料已存在" : "首次填写资料" }}
+
+          <div
+            class="edit-right refined-edit-right"
+            :style="{
+              opacity: editContentOpacity,
+              transform: `translateY(${(1 - section2Progress) * 30}px)`
+            }"
+          >
+            <div class="edit-header refined-header">
+              <h2>EDIT YOUR PROFILE</h2>
+            </div>
+
+            <form class="profile-form refined-form" @submit.prevent="handleSubmit">
+              <div class="form-block refined-block">
+                <div class="block-content">
+                  <h3>Basic Information</h3>
+
+                  <div class="form-grid refined-grid">
+                    <div class="form-item">
+                      <label>姓名</label>
+                      <input v-model="form.username" type="text" placeholder="请输入姓名" />
+                    </div>
+
+                    <div class="form-item">
+                      <label>性别</label>
+                      <select v-model="form.gender">
+                        <option value="">请选择性别</option>
+                        <option value="男">男</option>
+                        <option value="女">女</option>
+                      </select>
+                    </div>
+
+                    <div class="form-item">
+                      <label>年龄</label>
+                      <input v-model="form.age" type="number" placeholder="请输入年龄" />
+                    </div>
+
+                    <div class="form-item">
+                      <label>电话</label>
+                      <input
+                        v-model="form.phone"
+                        type="text"
+                        maxlength="11"
+                        placeholder="请输入11位手机号"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-block refined-block">
+                <div class="block-content">
+                  <h3>Education & Contact</h3>
+
+                  <div class="form-grid refined-grid">
+                    <div class="form-item">
+                      <label>学校</label>
+                      <input v-model="form.school" type="text" placeholder="请输入学校" />
+                    </div>
+
+                    <div class="form-item">
+                      <label>专业</label>
+                      <input v-model="form.major" type="text" placeholder="请输入专业" />
+                    </div>
+
+                    <div class="form-item">
+                      <label>年级</label>
+                      <select v-model="form.grade">
+                        <option value="">请选择年级</option>
+                        <option value="大一">大一</option>
+                        <option value="大二">大二</option>
+                        <option value="大三">大三</option>
+                        <option value="大四">大四</option>
+                        <option value="研究生">研究生</option>
+                      </select>
+                    </div>
+
+                    <div class="form-item">
+                      <label>邮箱</label>
+                      <input
+                        v-model="form.email"
+                        type="email"
+                        placeholder="请输入邮箱"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-block refined-block">
+                <div class="block-content">
+                  <h3>Personal Description</h3>
+
+                  <div class="form-grid one-col refined-grid">
+                    <div class="form-item full">
+                      <label>个人简介</label>
+                      <textarea
+                        v-model="form.bio"
+                        rows="5"
+                        placeholder="请输入你的兴趣、能力特点、职业倾向等"
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-actions refined-actions">
+                <div class="completion-box refined-completion">
+                  <span>PROFILE COMPLETION</span>
+                  <strong>{{ profileCompletion }}%</strong>
+                </div>
+                <button type="submit" class="save-btn refined-save-btn" :disabled="isSaving">
+                  {{ isSaving ? 'SAVING...' : 'SAVE PROFILE' }}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-
-        <div class="form-grid">
-          <div class="form-item">
-            <label>真实姓名</label>
-            <input v-model="profile.real_name" type="text" placeholder="请输入姓名" />
-          </div>
-
-          <div class="form-item">
-            <label>性别</label>
-            <select v-model="profile.gender">
-              <option value="">请选择</option>
-              <option value="男">男</option>
-              <option value="女">女</option>
-              <option value="保密">保密</option>
-            </select>
-          </div>
-
-          <div class="form-item">
-            <label>学校</label>
-            <input v-model="profile.school" type="text" placeholder="请输入学校" />
-          </div>
-
-          <div class="form-item">
-            <label>专业</label>
-            <input v-model="profile.major" type="text" placeholder="请输入专业" />
-          </div>
-
-          <div class="form-item">
-            <label>年级</label>
-            <input v-model="profile.grade" type="text" placeholder="如：大三 / 2023级" />
-          </div>
-
-          <div class="form-item">
-            <label>年龄</label>
-            <input v-model.number="profile.age" type="number" placeholder="请输入年龄" />
-          </div>
-
-          <div class="form-item">
-            <label>电话</label>
-            <input
-              v-model="profile.phone"
-              type="text"
-              maxlength="11"
-              placeholder="请输入11位手机号"
-            />
-            <span v-if="phoneError" class="field-error">{{ phoneError }}</span>
-          </div>
-
-          <div class="form-item">
-            <label>邮箱</label>
-            <input
-              v-model="profile.email"
-              type="email"
-              placeholder="请输入邮箱"
-            />
-            <span v-if="emailError" class="field-error">{{ emailError }}</span>
-          </div>
-
-          <div class="form-item form-item-full">
-            <label>个人简介</label>
-            <textarea
-              v-model="profile.bio"
-              rows="6"
-              placeholder="介绍一下你的兴趣、方向或目前的职业规划想法"
-            ></textarea>
-          </div>
-        </div>
-
-        <div class="action-row">
-          <button class="primary-btn" @click="saveProfile" :disabled="loading">
-            {{ loading ? "处理中..." : hasProfile ? "保存修改" : "创建资料" }}
-          </button>
-
-          <button class="secondary-btn" @click="fetchProfile" :disabled="loading">
-            重新获取
-          </button>
-        </div>
-
-        <p class="message" v-if="message">{{ message }}</p>
       </section>
+    </div>
+
+    <!-- 共享图片层 -->
+    <div
+      v-if="sharedImageVisible"
+      class="shared-image-layer"
+      :style="sharedImageStyle"
+    >
+      <img
+        :src="avatarPreview || defaultAvatar"
+        alt="avatar"
+        class="shared-image"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from "vue"
-import axios from "axios"
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '../stores/user.js'
 
-// 这里先临时写死测试 user_id
-// 后面和队友联调后再改成从登录状态中读取
-const userId = 1
+const router = useRouter()
+const userStore = useUserStore()
 
-const baseURL = "http://127.0.0.1:8000"
+const API_BASE = 'http://127.0.0.1:8000'
+const defaultAvatar =
+  'https://cdn.jsdelivr.net/gh/evjdent/SuperTinyIcons/images/svg/user.svg'
 
-const loading = ref(false)
-const hasProfile = ref(false)
-const message = ref("")
+const storyContainerRef = ref(null)
+const heroImageTargetRef = ref(null)
+const editImageTargetRef = ref(null)
 
-const selectedFile = ref(null)
-const avatarPreview = ref("")
+const avatarPreview = ref('')
+const heroProgress = ref(0)
+const section2Progress = ref(0)
 
-const profile = reactive({
-  real_name: "",
-  gender: "",
-  school: "",
-  major: "",
-  grade: "",
-  age: null,
-  phone: "",
-  email: "",
-  bio: "",
-  avatar: ""
+const sharedImageStyle = ref({})
+const sharedImageVisible = ref(true)
+const isSaving = ref(false)
+const isLoadingProfile = ref(false)
+
+const form = reactive({
+  username: '',
+  gender: '',
+  age: '',
+  phone: '',
+  email: '',
+  school: '',
+  major: '',
+  grade: '',
+  bio: ''
 })
 
-const avatarUrl = computed(() => {
-  if (!profile.avatar) return ""
-  return `${baseURL}${profile.avatar}`
-})
+const clamp = (v, min = 0, max = 1) => Math.min(max, Math.max(min, v))
 
-const phoneError = computed(() => {
-  if (!profile.phone) return ""
-  return /^1\d{10}$/.test(profile.phone) ? "" : "电话必须为11位数字"
-})
+const updateScene = () => {
+  const container = storyContainerRef.value
+  const heroTarget = heroImageTargetRef.value
+  const editTarget = editImageTargetRef.value
+  if (!container || !heroTarget || !editTarget) return
 
-const emailError = computed(() => {
-  if (!profile.email) return ""
-  return /@(163\.com|qq\.com|gmail\.com)$/.test(profile.email)
-    ? ""
-    : "邮箱需以 @163.com、@qq.com 或 @gmail.com 结尾"
-})
+  const scrollTop = container.scrollTop
+  const vh = container.clientHeight || 1
 
-const validateForm = () => {
-  if (profile.phone && phoneError.value) {
-    message.value = phoneError.value
-    return false
+  heroProgress.value = clamp(scrollTop / vh)
+  section2Progress.value = clamp((scrollTop - vh * 0.15) / (vh * 0.85))
+
+  const start = heroTarget.getBoundingClientRect()
+  const end = editTarget.getBoundingClientRect()
+
+  const t = heroProgress.value
+  const lerp = (a, b, p) => a + (b - a) * p
+
+  const left = lerp(start.left, end.left, t)
+  const top = lerp(start.top, end.top, t)
+  const width = lerp(start.width, end.width, t)
+  const height = lerp(start.height, end.height, t)
+  const shadowBlur = lerp(8, 22, t)
+
+  sharedImageStyle.value = {
+    left: `${left}px`,
+    top: `${top}px`,
+    width: `${width}px`,
+    height: `${height}px`,
+    borderRadius: '0px',
+    boxShadow: `0 12px ${shadowBlur}px rgba(0,0,0,0.12)`,
+    opacity: scrollTop > vh * 1.25 ? 0 : 1
   }
 
-  if (profile.email && emailError.value) {
-    message.value = emailError.value
-    return false
-  }
-
-  return true
+  sharedImageVisible.value = scrollTop <= vh * 1.28
 }
 
-// 获取个人信息
-const fetchProfile = async () => {
-  loading.value = true
-  message.value = ""
+const heroTitleOpacity = computed(() => 1 - heroProgress.value * 1.05)
+const editContentOpacity = computed(() => 0.2 + section2Progress.value * 0.8)
 
-  try {
-    const res = await axios.get(`${baseURL}/profile/${userId}`)
-    const data = res.data
+const profileCompletion = computed(() => {
+  const fields = [
+    form.username,
+    form.gender,
+    form.age,
+    form.phone,
+    form.email,
+    form.school,
+    form.major,
+    form.grade,
+    form.bio
+  ]
+  const filled = fields.filter((item) => String(item).trim() !== '').length
+  return Math.round((filled / fields.length) * 100)
+})
 
-    profile.real_name = data.real_name || ""
-    profile.gender = data.gender || ""
-    profile.school = data.school || ""
-    profile.major = data.major || ""
-    profile.grade = data.grade || ""
-    profile.age = data.age ?? null
-    profile.phone = data.phone || ""
-    profile.email = data.email || ""
-    profile.bio = data.bio || ""
-    profile.avatar = data.avatar || ""
+const validatePhone = (phone) => /^1\d{10}$/.test(phone)
+const validateEmail = (email) =>
+  /^[A-Za-z0-9._%+-]+@(163\.com|qq\.com|gmail\.com)$/.test(email)
 
-    hasProfile.value = true
-    message.value = "个人信息获取成功"
-  } catch (error) {
-    if (error.response && error.response.status === 404) {
-      hasProfile.value = false
-      message.value = "当前用户还没有个人资料，请先填写并创建"
-    } else {
-      console.error(error)
-      message.value = "获取个人信息失败"
-    }
-  } finally {
-    loading.value = false
-  }
+const goHome = () => {
+  router.push('/')
 }
 
-// 创建或修改个人信息
-const saveProfile = async () => {
-  if (!validateForm()) return
+const getCurrentUserId = () => {
+  const id = Number(userStore.userId)
+  return Number.isFinite(id) && id > 0 ? id : null
+}
 
-  loading.value = true
-  message.value = ""
-
+const buildProfilePayload = (includeUserId = false) => {
   const payload = {
-    user_id: userId,
-    real_name: profile.real_name,
-    gender: profile.gender,
-    school: profile.school,
-    major: profile.major,
-    grade: profile.grade,
-    age: profile.age,
-    phone: profile.phone,
-    email: profile.email,
-    bio: profile.bio
+    real_name: form.username || null,
+    gender: form.gender || null,
+    school: form.school || null,
+    major: form.major || null,
+    grade: form.grade || null,
+    age: form.age === '' ? null : Number(form.age),
+    phone: form.phone || null,
+    email: form.email || null,
+    bio: form.bio || null
   }
 
+  if (includeUserId) {
+    payload.user_id = getCurrentUserId()
+  }
+
+  return payload
+}
+
+const loadProfile = async () => {
+  const userId = getCurrentUserId()
+  if (!userId) {
+    console.warn('没有获取到 userId，无法加载个人信息')
+    return
+  }
+
+  isLoadingProfile.value = true
+
   try {
-    if (!hasProfile.value) {
-      await axios.post(`${baseURL}/profile`, payload)
-      hasProfile.value = true
-      message.value = "个人信息创建成功"
-    } else {
-      await axios.put(`${baseURL}/profile/${userId}`, {
-        real_name: profile.real_name,
-        gender: profile.gender,
-        school: profile.school,
-        major: profile.major,
-        grade: profile.grade,
-        age: profile.age,
-        phone: profile.phone,
-        email: profile.email,
-        bio: profile.bio
-      })
-      message.value = "个人信息修改成功"
+    const res = await fetch(`${API_BASE}/profile/${userId}`)
+
+    if (res.status === 404) {
+      console.log('该用户还没有个人信息记录')
+      return
     }
 
-    await fetchProfile()
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.detail || '加载个人信息失败')
+    }
+
+    const data = await res.json()
+
+    form.username = data.real_name || ''
+    form.gender = data.gender || ''
+    form.age = data.age ?? ''
+    form.phone = data.phone || ''
+    form.email = data.email || ''
+    form.school = data.school || ''
+    form.major = data.major || ''
+    form.grade = data.grade || ''
+    form.bio = data.bio || ''
+
+    if (data.avatar) {
+      avatarPreview.value = `${API_BASE}${data.avatar}`
+    }
+
+    requestAnimationFrame(() => {
+      updateScene()
+    })
   } catch (error) {
-    console.error(error)
-    message.value = "保存失败，请检查后端是否正常运行"
+    console.error('加载个人信息失败：', error)
+    alert(`加载个人信息失败：${error.message}`)
   } finally {
-    loading.value = false
+    isLoadingProfile.value = false
   }
 }
 
-// 选择头像文件
-const handleFileChange = (event) => {
-  const file = event.target.files[0]
+const handleSubmit = async () => {
+  const userId = getCurrentUserId()
+  if (!userId) {
+    alert('未获取到用户ID，请先登录')
+    return
+  }
+
+  if (form.phone && !validatePhone(form.phone)) {
+    alert('手机号必须是11位且以1开头')
+    return
+  }
+
+  if (form.email && !validateEmail(form.email)) {
+    alert('邮箱仅支持 163.com / qq.com / gmail.com')
+    return
+  }
+
+  isSaving.value = true
+
+  try {
+    const checkRes = await fetch(`${API_BASE}/profile/${userId}`)
+
+    let res
+
+    if (checkRes.status === 404) {
+      res = await fetch(`${API_BASE}/profile/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(buildProfilePayload(true))
+      })
+    } else if (checkRes.ok) {
+      res = await fetch(`${API_BASE}/profile/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(buildProfilePayload(false))
+      })
+    } else {
+      const err = await checkRes.json().catch(() => ({}))
+      throw new Error(err.detail || '检查个人信息失败')
+    }
+
+    const data = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+      throw new Error(data.detail || '保存失败')
+    }
+
+    alert('保存成功')
+    console.log('保存结果：', data)
+  } catch (error) {
+    console.error('保存失败：', error)
+    alert(`保存失败：${error.message}`)
+  } finally {
+    isSaving.value = false
+  }
+}
+
+const handleAvatarChange = async (e) => {
+  const file = e.target.files?.[0]
   if (!file) return
 
-  selectedFile.value = file
   avatarPreview.value = URL.createObjectURL(file)
-}
 
-// 上传头像
-const uploadAvatar = async () => {
-  if (!selectedFile.value) {
-    message.value = "请先选择头像图片"
+  const userId = getCurrentUserId()
+  if (!userId) {
+    alert('未获取到用户ID，请先登录')
     return
   }
-
-  if (!hasProfile.value) {
-    message.value = "请先创建个人资料，再上传头像"
-    return
-  }
-
-  loading.value = true
-  message.value = ""
 
   try {
     const formData = new FormData()
-    formData.append("file", selectedFile.value)
+    formData.append('file', file)
 
-    const res = await axios.post(`${baseURL}/upload-avatar/${userId}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data"
-      }
+    const res = await fetch(`${API_BASE}/profile/upload-avatar/${userId}`, {
+      method: 'POST',
+      body: formData
     })
 
-    profile.avatar = res.data.avatar_url
-    message.value = "头像上传成功"
-    selectedFile.value = null
+    const data = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+      throw new Error(data.detail || '头像上传失败')
+    }
+
+    if (data.avatar_url) {
+      avatarPreview.value = `${API_BASE}${data.avatar_url}`
+    }
+
+    console.log('头像上传成功：', data)
   } catch (error) {
-    console.error(error)
-    message.value = "头像上传失败"
+    console.error('头像上传失败：', error)
+    alert(`头像上传失败：${error.message}`)
   } finally {
-    loading.value = false
+    requestAnimationFrame(() => {
+      updateScene()
+    })
   }
 }
 
 onMounted(() => {
-  fetchProfile()
+  updateScene()
+  loadProfile()
+
+  const container = storyContainerRef.value
+  container?.addEventListener('scroll', updateScene, { passive: true })
+  window.addEventListener('resize', updateScene)
+})
+
+onBeforeUnmount(() => {
+  const container = storyContainerRef.value
+  container?.removeEventListener('scroll', updateScene)
+  window.removeEventListener('resize', updateScene)
 })
 </script>
 
 <style scoped>
+* {
+  box-sizing: border-box;
+}
+
 .profile-page {
-  min-height: 100vh;
-  padding: 48px;
-  background: #d9d6d1;
-  color: #35568a;
-}
-
-.profile-wrap {
-  max-width: 1380px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 430px minmax(0, 1fr);
-  gap: 52px;
-  align-items: start;
-}
-
-.poster-panel {
+  height: 100vh;
+  background: #1f5d95;
+  font-family: "Times New Roman", "Georgia", "PingFang SC", "Microsoft YaHei", serif;
+  color: #1f5d95;
+  overflow: hidden;
   position: relative;
-  min-height: 760px;
+}
+
+.story-container {
+  height: 100vh;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+}
+
+.story-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.story-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.story-section {
+  min-height: 100vh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  position: relative;
+}
+
+.back-btn {
+  position: fixed;
+  top: 22px;
+  right: 22px;
+  z-index: 60;
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1f5d95;
+  padding: 12px 18px;
+  font-size: 12px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* 第一屏 */
+.hero-section {
+  padding: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1f5d95;
+}
+
+.hero-card {
+  width: min(1040px, 100%);
+  min-height: 620px;
+  background: #f5f5f3;
+  position: relative;
+  padding: 26px 42px 60px;
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.28) inset;
+}
+
+.hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.hero-date {
+  font-size: 18px;
+  letter-spacing: 6px;
+  color: #1f5d95;
+}
+
+.hero-note {
+  width: 230px;
+  text-align: left;
+  font-size: 18px;
+  line-height: 1.2;
+  color: #1f5d95;
+  word-break: break-word;
+}
+
+.hero-center {
+  position: relative;
+  height: 430px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.poster {
-  position: absolute;
-  width: 300px;
-  height: 430px;
-  border: 5px solid #c84f45;
-  background: rgba(240, 229, 208, 0.95);
-  box-shadow: 0 12px 30px rgba(53, 86, 138, 0.08);
-}
-
-.poster-back {
-  top: 30px;
-  left: 40px;
+.hero-image-target {
+  width: 250px;
+  height: 310px;
+  position: relative;
   z-index: 1;
 }
 
-.poster-middle {
-  top: 120px;
-  left: 100px;
-  z-index: 2;
-}
-
-.poster-front {
-  top: 200px;
-  left: 55px;
-  z-index: 3;
-  background: #cdb087;
-  padding: 26px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.poster-text {
-  color: #c84f45;
-  font-family: "Georgia", "Times New Roman", serif;
-  letter-spacing: 3px;
-  text-align: center;
-}
-
-.poster-text.top {
-  margin-top: 24px;
-  font-size: 2.5rem;
-}
-
-.poster-text.center {
-  margin-top: 96px;
-  font-size: 2.35rem;
-}
-
-.avatar-box {
-  width: 100%;
-  height: 250px;
-  border: 5px solid #c84f45;
-  background: #efe7d5;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.avatar-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.avatar-placeholder {
-  color: #9a7b57;
-  font-size: 1.3rem;
-  letter-spacing: 2px;
-}
-
-.poster-footer {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.poster-name {
-  margin: 0;
-  font-size: 1.25rem;
-  color: #35568a;
-  font-weight: 700;
-}
-
-.poster-major {
-  margin: 0 0 6px 0;
-  color: #6f7f95;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-.upload-btn,
-.save-avatar-btn {
-  border: none;
-  cursor: pointer;
-  padding: 10px 14px;
-  border-radius: 12px;
-  font-size: 0.92rem;
-  transition: all 0.25s ease;
-}
-
-.upload-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #35568a;
-  color: #fff;
-}
-
-.save-avatar-btn {
-  background: #c84f45;
-  color: #fff;
-}
-
-.upload-btn:hover,
-.save-avatar-btn:hover,
-.primary-btn:hover,
-.secondary-btn:hover {
-  transform: translateY(-2px);
-  opacity: 0.92;
-}
-
-.save-avatar-btn:disabled,
-.primary-btn:disabled,
-.secondary-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.stripe-group {
+.hero-title {
   position: absolute;
-  inset: 0;
-  z-index: 0;
+  left: 50%;
+  top: 50%;
+  margin: 0;
+  font-size: 76px;
+  letter-spacing: 8px;
+  font-weight: 500;
+  color: #1f5d95;
+  z-index: 3;
+  white-space: nowrap;
+}
+
+.hero-dots {
   display: flex;
   justify-content: center;
-  gap: 18px;
+  gap: 14px;
+  margin-top: 4px;
 }
 
-.stripe {
+.dot {
   width: 14px;
-  height: 100%;
-  background: rgba(53, 86, 138, 0.55);
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(31, 93, 149, 0.45);
 }
 
-.info-panel {
-  background: rgba(255, 255, 255, 0.34);
-  border: 1px solid rgba(53, 86, 138, 0.12);
-  border-radius: 24px;
-  padding: 34px 34px 28px;
-  box-shadow: 0 10px 35px rgba(53, 86, 138, 0.08);
-  backdrop-filter: blur(2px);
-  min-width: 0;
+.dot.active {
+  background: #6f9ac1;
 }
 
-.panel-header {
+.hero-summary {
+  position: absolute;
+  right: 42px;
+  bottom: 34px;
+  text-align: right;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #1f5d95;
+}
+
+.hero-summary p {
+  margin: 0;
+}
+
+.scroll-tip {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #1f5d95;
+  font-size: 12px;
+  letter-spacing: 5px;
+}
+
+/* 第二屏 */
+.edit-section {
+  min-height: 100vh;
+  background: #f5f5f3;
+  display: flex;
+  align-items: center;
+  padding: 32px 38px;
+}
+
+.edit-stage {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 400px minmax(0, 760px);
+  justify-content: center;
+  gap: 34px;
+}
+
+.edit-left {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 28px;
+  justify-content: center;
 }
 
-.sub-title {
-  margin: 0 0 8px 0;
-  color: #7b8da8;
-  letter-spacing: 2px;
-  font-size: 0.82rem;
+.edit-image-frame {
+  position: relative;
+  width: 360px;
+  background: #7fa3c4;
+  padding: 20px 26px 12px;
+  min-height: 550px;
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.08);
 }
 
-.panel-header h1 {
+.left-top-text {
+  margin: 0 0 14px;
+  color: #f5f5f3;
+  font-size: 16px;
+}
+
+.edit-image-target {
+  width: 100%;
+  height: 440px;
+  position: relative;
+}
+
+.edit-image-target .change-avatar-btn {
+  position: absolute;
+  bottom: -42px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  background: transparent;
+  color: #1f5d95;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.edit-image-target .change-avatar-btn:hover {
+  text-decoration: underline;
+}
+
+.left-vertical-text {
+  position: absolute;
+  right: 8px;
+  bottom: 28px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  color: #f5f5f3;
+  font-size: 14px;
+  letter-spacing: 1px;
   margin: 0;
-  font-size: 2rem;
-  color: #35568a;
 }
 
-.status-text {
-  padding: 8px 14px;
-  border-radius: 14px;
-  background: rgba(53, 86, 138, 0.1);
-  color: #35568a;
-  font-size: 0.92rem;
+.edit-right {
+  transition: 0.2s linear;
+}
+
+.refined-edit-right {
+  padding: 18px 12px 12px 0;
+  max-width: 760px;
+}
+
+.refined-header {
+  margin-bottom: 22px;
+}
+
+.edit-tag {
+  margin: 0 0 10px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: #7fa3c4;
+}
+
+.refined-header h2 {
+  margin: 0;
+  font-size: 52px;
+  line-height: 1.02;
+  font-weight: 500;
+  letter-spacing: 1px;
+  color: #1f5d95;
+}
+
+.refined-form {
+  width: 100%;
+}
+
+.form-block {
+  margin-bottom: 22px;
+}
+
+.block-content h3 {
+  margin: 0 0 14px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #3d5a7a;
 }
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 18px;
-  row-gap: 18px;
+  grid-template-columns: repeat(2, minmax(170px, 1fr));
+}
+
+.refined-grid {
+  gap: 14px 16px;
+}
+
+.form-grid.one-col {
+  grid-template-columns: 1fr;
 }
 
 .form-item {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-width: 0;
 }
 
-.form-item-full {
+.form-item.full {
   grid-column: 1 / -1;
 }
 
 .form-item label {
-  font-size: 0.95rem;
-  color: #4e6487;
-  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: #5d84a8;
+  letter-spacing: 0.5px;
+}
+
+.hero-image-target {
+  position: relative;
+}
+
+.hidden-input {
+  display: none;
 }
 
 .form-item input,
 .form-item select,
 .form-item textarea {
   width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  border: 1px solid rgba(53, 86, 138, 0.18);
-  background: rgba(255, 255, 255, 0.75);
-  border-radius: 10px;
-  padding: 13px 14px;
-  font-size: 0.96rem;
-  color: #35568a;
+  border: none;
+  border-bottom: 1px solid rgba(79, 122, 162, 0.28);
+  background: transparent;
+  padding: 10px 2px 9px;
+  font-size: 14px;
+  color: #2a5e90;
   outline: none;
-  transition: 0.2s ease;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 0;
 }
 
 .form-item input:focus,
 .form-item select:focus,
 .form-item textarea:focus {
-  border-color: #35568a;
-  box-shadow: 0 0 0 3px rgba(53, 86, 138, 0.08);
+  border-bottom-color: #4f7aa2;
+  box-shadow: 0 8px 12px -12px rgba(79, 122, 162, 0.45);
 }
 
 .form-item textarea {
+  min-height: 92px;
   resize: vertical;
-  min-height: 150px;
+  padding-top: 10px;
 }
 
-.field-error {
-  color: #c84f45;
-  font-size: 0.84rem;
-  margin-top: -2px;
-}
-
-.action-row {
-  margin-top: 28px;
+.form-actions {
+  margin-top: 4px;
+  padding-left: 34px;
   display: flex;
-  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.primary-btn,
-.secondary-btn {
+.completion-box {
+  gap: 10px;
+  font-size: 12px;
+  color: #5d84a8;
+  display: flex;
+  align-items: center;
+}
+
+.completion-box strong {
+  font-size: 18px;
+  font-weight: 500;
+  color: #1f5d95;
+}
+
+.save-btn {
+  background: #1f5d95;
+  color: #f5f5f3;
+  padding: 11px 18px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  border-radius: 999px;
   border: none;
   cursor: pointer;
-  padding: 12px 20px;
-  border-radius: 12px;
-  font-size: 0.96rem;
-  transition: all 0.25s ease;
+  box-shadow: none;
 }
 
-.primary-btn {
-  background: #35568a;
+.save-btn:hover {
+  background: #6f9ac1;
   color: #fff;
 }
 
-.secondary-btn {
-  background: #c84f45;
-  color: #fff;
+.save-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
-.message {
-  margin-top: 18px;
-  color: #35568a;
-  font-size: 0.95rem;
+/* 共享图片 */
+.shared-image-layer {
+  position: fixed;
+  z-index: 40;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 0.18s linear;
 }
 
+.shared-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* responsive */
 @media (max-width: 1100px) {
-  .profile-wrap {
+  .edit-stage {
     grid-template-columns: 1fr;
   }
 
-  .poster-panel {
-    min-height: 720px;
+  .edit-left {
+    justify-content: flex-start;
+  }
+
+  .edit-image-frame {
+    width: min(420px, 100%);
+    min-height: auto;
+  }
+
+  .edit-image-target {
+    height: 420px;
+  }
+
+  .refined-edit-right {
+    max-width: none;
+    padding: 8px 0 0;
   }
 }
 
 @media (max-width: 768px) {
-  .profile-page {
-    padding: 24px;
+  .hero-section {
+    padding: 16px;
+  }
+
+  .hero-card {
+    padding: 18px 20px 28px;
+    min-height: 540px;
+  }
+
+  .hero-date,
+  .hero-note {
+    font-size: 14px;
+  }
+
+  .hero-note {
+    width: 150px;
+  }
+
+  .hero-center {
+    height: 340px;
+  }
+
+  .hero-image-target {
+    width: 180px;
+    height: 230px;
+  }
+
+  .hero-title {
+    font-size: 38px;
+    letter-spacing: 4px;
+  }
+
+  .hero-summary {
+    position: static;
+    margin-top: 18px;
+    text-align: center;
+  }
+
+  .scroll-tip {
+    letter-spacing: 3px;
+  }
+
+  .edit-section {
+    padding: 18px 16px 28px;
+    gap: 22px;
+  }
+
+  .edit-image-frame {
+    padding: 18px 18px 20px;
+  }
+
+  .edit-image-target {
+    height: 320px;
+  }
+
+  .left-vertical-text {
+    display: none;
+  }
+
+  .refined-header h2 {
+    font-size: 38px;
   }
 
   .form-grid {
     grid-template-columns: 1fr;
   }
 
-  .poster-panel {
-    transform: scale(0.9);
-    transform-origin: top center;
+  .form-actions {
+    padding-left: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .back-btn {
+    top: 14px;
+    right: 14px;
+    padding: 10px 14px;
   }
 }
 </style>
