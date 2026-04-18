@@ -1,8 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Boolean, Text
 from sqlalchemy.sql import func
-from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-
 from database import Base
 
 
@@ -36,9 +34,16 @@ class UserProfile(Base):
     email = Column(String(100), nullable=True)
     bio = Column(Text, nullable=True)
 
+    # ===== 新增字段 =====
+    interest = Column(Text, nullable=True)
+    skills = Column(Text, nullable=True)
+    target_preference = Column(String(20), nullable=True)
+    career_goal = Column(String(255), nullable=True)
+
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     user = relationship("User", back_populates="profile")
+
 
 # ========= 发展路径推荐表 =========
 class CareerPath(Base):

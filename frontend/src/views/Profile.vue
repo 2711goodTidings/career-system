@@ -31,6 +31,7 @@
             <p><strong>姓名：</strong>{{ form.username || '未填写' }}</p>
             <p><strong>学校：</strong>{{ form.school || '未填写' }}</p>
             <p><strong>专业：</strong>{{ form.major || '未填写' }}</p>
+            <p><strong>目标倾向：</strong>{{ form.target_preference || '未填写' }}</p>
           </div>
         </div>
 
@@ -164,6 +165,60 @@
                 </div>
               </div>
 
+              <div class="form-block refined-block">
+                <div class="block-content">
+                  <h3>Interest & Skills</h3>
+
+                  <div class="form-grid one-col refined-grid">
+                    <div class="form-item full">
+                      <label>兴趣方向</label>
+                      <textarea
+                        v-model="form.interest"
+                        rows="4"
+                        placeholder="请输入你的兴趣方向，例如：人工智能、前端开发、数据分析、考研深造"
+                      ></textarea>
+                    </div>
+
+                    <div class="form-item full">
+                      <label>已有技能</label>
+                      <textarea
+                        v-model="form.skills"
+                        rows="4"
+                        placeholder="请输入你已有的技能，例如：Python、Java、Vue、MySQL、沟通表达"
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-block refined-block">
+                <div class="block-content">
+                  <h3>Career Preference</h3>
+
+                  <div class="form-grid refined-grid">
+                    <div class="form-item">
+                      <label>目标倾向</label>
+                      <select v-model="form.target_preference">
+                        <option value="">请选择目标倾向</option>
+                        <option value="就业">就业</option>
+                        <option value="考研">考研</option>
+                        <option value="考公">考公</option>
+                        <option value="出国">出国</option>
+                      </select>
+                    </div>
+
+                    <div class="form-item full">
+                      <label>职业目标</label>
+                      <textarea
+                        v-model="form.career_goal"
+                        rows="4"
+                        placeholder="请输入你的职业目标，例如：希望进入互联网大厂，从事AI研发或数据分析相关工作"
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div class="form-actions refined-actions">
                 <div class="completion-box refined-completion">
                   <span>PROFILE COMPLETION</span>
@@ -228,7 +283,11 @@ const form = reactive({
   school: '',
   major: '',
   grade: '',
-  bio: ''
+  bio: '',
+  interest: '',
+  skills: '',
+  target_preference: '',
+  career_goal: ''
 })
 
 const clamp = (v, min = 0, max = 1) => Math.min(max, Math.max(min, v))
@@ -283,9 +342,13 @@ const profileCompletion = computed(() => {
     form.school,
     form.major,
     form.grade,
-    form.bio
+    form.bio,
+    form.interest,
+    form.skills,
+    form.target_preference,
+    form.career_goal
   ]
-  const filled = fields.filter((item) => String(item).trim() !== '').length
+  const filled = fields.filter((item) => String(item ?? '').trim() !== '').length
   return Math.round((filled / fields.length) * 100)
 })
 
@@ -312,7 +375,11 @@ const buildProfilePayload = (includeUserId = false) => {
     age: form.age === '' ? null : Number(form.age),
     phone: form.phone || null,
     email: form.email || null,
-    bio: form.bio || null
+    bio: form.bio || null,
+    interest: form.interest || null,
+    skills: form.skills || null,
+    target_preference: form.target_preference || null,
+    career_goal: form.career_goal || null
   }
 
   if (includeUserId) {
@@ -355,6 +422,10 @@ const loadProfile = async () => {
     form.major = data.major || ''
     form.grade = data.grade || ''
     form.bio = data.bio || ''
+    form.interest = data.interest || ''
+    form.skills = data.skills || ''
+    form.target_preference = data.target_preference || ''
+    form.career_goal = data.career_goal || ''
 
     if (data.avatar) {
       avatarPreview.value = `${API_BASE}${data.avatar}`
@@ -611,24 +682,6 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
-.hero-dots {
-  display: flex;
-  justify-content: center;
-  gap: 14px;
-  margin-top: 4px;
-}
-
-.dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: rgba(31, 93, 149, 0.45);
-}
-
-.dot.active {
-  background: #6f9ac1;
-}
-
 .hero-summary {
   position: absolute;
   right: 42px;
@@ -718,18 +771,6 @@ onBeforeUnmount(() => {
   text-decoration: underline;
 }
 
-.left-vertical-text {
-  position: absolute;
-  right: 8px;
-  bottom: 28px;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  color: #f5f5f3;
-  font-size: 14px;
-  letter-spacing: 1px;
-  margin: 0;
-}
-
 .edit-right {
   transition: 0.2s linear;
 }
@@ -741,13 +782,6 @@ onBeforeUnmount(() => {
 
 .refined-header {
   margin-bottom: 22px;
-}
-
-.edit-tag {
-  margin: 0 0 10px;
-  font-size: 12px;
-  letter-spacing: 3px;
-  color: #7fa3c4;
 }
 
 .refined-header h2 {
@@ -801,10 +835,6 @@ onBeforeUnmount(() => {
   font-size: 12px;
   color: #5d84a8;
   letter-spacing: 0.5px;
-}
-
-.hero-image-target {
-  position: relative;
 }
 
 .hidden-input {
@@ -979,10 +1009,6 @@ onBeforeUnmount(() => {
 
   .edit-image-target {
     height: 320px;
-  }
-
-  .left-vertical-text {
-    display: none;
   }
 
   .refined-header h2 {

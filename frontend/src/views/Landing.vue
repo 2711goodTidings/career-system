@@ -314,13 +314,11 @@ const strip3Width = computed(() => `${100 - 17 * stripProgress.value}%`)
 // 登录成功：解锁功能区 + 自动展开 + 自动滚动
 const handleLoginSuccess = () => {
   setTimeout(() => {
-    // 滚动到功能区
     functionRef.value?.scrollIntoView({
       behavior: 'smooth',
       block: 'start'
     })
-    // 自动展开卡片
-    cardsExpanded.value = true
+    cardsExpanded.value = false
   }, 500)
 }
 

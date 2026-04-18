@@ -18,6 +18,7 @@ router = APIRouter()
 UPLOAD_DIR = "uploads/avatars"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+
 @router.get("/{user_id}", response_model=UserProfileResponse)
 def get_profile(user_id: int, db: Session = Depends(get_db)):
     profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
@@ -26,6 +27,7 @@ def get_profile(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="该用户还没有个人信息记录")
 
     return profile
+
 
 @router.post("/", response_model=UserProfileResponse)
 def create_profile(profile_data: UserProfileCreate, db: Session = Depends(get_db)):
@@ -47,14 +49,20 @@ def create_profile(profile_data: UserProfileCreate, db: Session = Depends(get_db
         age=profile_data.age,
         phone=profile_data.phone,
         email=profile_data.email,
-        bio=profile_data.bio
+        bio=profile_data.bio,
+
+        # ===== 新增字段 =====
+        interest=profile_data.interest,
+        skills=profile_data.skills,
+        target_preference=profile_data.target_preference,
+        career_goal=profile_data.career_goal
     )
 
     db.add(new_profile)
     db.commit()
     db.refresh(new_profile)
-
     return new_profile
+
 
 @router.put("/{user_id}", response_model=UserProfileResponse)
 def update_profile(user_id: int, profile_data: UserProfileUpdate, db: Session = Depends(get_db)):
@@ -64,14 +72,13 @@ def update_profile(user_id: int, profile_data: UserProfileUpdate, db: Session = 
         raise HTTPException(status_code=404, detail="该用户还没有个人信息，请先创建")
 
     update_data = profile_data.model_dump(exclude_unset=True)
-
     for key, value in update_data.items():
         setattr(profile, key, value)
 
     db.commit()
     db.refresh(profile)
-
     return profile
+
 
 @router.post("/upload-avatar/{user_id}")
 def upload_avatar(user_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
@@ -96,7 +103,6 @@ def upload_avatar(user_id: int, file: UploadFile = File(...), db: Session = Depe
 
     avatar_url = f"/uploads/avatars/{unique_filename}"
     profile.avatar = avatar_url
-
     db.commit()
     db.refresh(profile)
 

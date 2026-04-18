@@ -33,6 +33,12 @@ class UserProfileCreate(BaseModel):
     email: Optional[str] = None
     bio: Optional[str] = None
 
+    # ===== 新增字段 =====
+    interest: Optional[str] = None
+    skills: Optional[str] = None
+    target_preference: Optional[str] = None
+    career_goal: Optional[str] = None
+
 
 class UserProfileUpdate(BaseModel):
     real_name: Optional[str] = None
@@ -44,6 +50,12 @@ class UserProfileUpdate(BaseModel):
     phone: Optional[str] = None
     email: Optional[str] = None
     bio: Optional[str] = None
+
+    # ===== 新增字段 =====
+    interest: Optional[str] = None
+    skills: Optional[str] = None
+    target_preference: Optional[str] = None
+    career_goal: Optional[str] = None
 
 
 class UserProfileResponse(BaseModel):
@@ -60,7 +72,15 @@ class UserProfileResponse(BaseModel):
     email: Optional[str] = None
     bio: Optional[str] = None
 
+    # ===== 新增字段 =====
+    interest: Optional[str] = None
+    skills: Optional[str] = None
+    target_preference: Optional[str] = None
+    career_goal: Optional[str] = None
+
     model_config = ConfigDict(from_attributes=True)
+
+
 # ========= 发展路径推荐模块 =========
 class CareerPathCreate(BaseModel):
     user_id: int
