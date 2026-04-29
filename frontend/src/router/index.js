@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Landing from '../views/Landing.vue'
 import Profile from '../views/Profile.vue'
-import Ability from '../views/Ability.vue'
+import Assessment from '../views/Assessment.vue'
 import Career from '../views/Career.vue'
 import Planning from '../views/Planning.vue'
 
@@ -17,9 +17,13 @@ const routes = [
     component: Profile
   },
   {
+    path: '/assessment',
+    name: 'Assessment',
+    component: Assessment
+  },
+  {
     path: '/ability',
-    name: 'Ability',
-    component: Ability
+    redirect: '/assessment'
   },
   {
     path: '/career',

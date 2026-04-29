@@ -33,7 +33,7 @@ const router = useRouter()
 
 const navItems = [
   { key: 'profile', en: 'PROFILE', label: '个人信息', path: '/profile' },
-  { key: 'ability', en: 'ABILITY', label: '能力评估', path: '/ability' },
+  { key: 'ability', en: 'ABILITY', label: '能力评估', path: '/assessment' },
   { key: 'career', en: 'CAREER', label: '职业规划', path: '/career' },
   { key: 'planning', en: 'PLANNING', label: '成长规划', path: '/planning' }
 ]

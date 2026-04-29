@@ -1,28 +1,35 @@
-from typing import Optional, List
+from typing import Dict, List, Optional
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, Field
 
-
-# ========= 注册登录模块 =========
+# ========= 用户认证相关 =========
 class UserRegister(BaseModel):
     username: str
     password: str
-
+    email: str
 
 class UserLogin(BaseModel):
     username: str
     password: str
 
-
 class UserResponse(BaseModel):
     user_id: int
     username: str
+    email: Optional[str] = None
+    created_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
-# ========= 个人信息模块 =========
-class UserProfileCreate(BaseModel):
-    user_id: int
+class TokenData(BaseModel):
+    user_id: Optional[int] = None
+
+# ========= 用户个人信息相关 =========
+class UserProfileBase(BaseModel):
     real_name: Optional[str] = None
     gender: Optional[str] = None
     school: Optional[str] = None
@@ -32,90 +39,83 @@ class UserProfileCreate(BaseModel):
     phone: Optional[str] = None
     email: Optional[str] = None
     bio: Optional[str] = None
-
-    # ===== 新增字段 =====
     interest: Optional[str] = None
     skills: Optional[str] = None
     target_preference: Optional[str] = None
     career_goal: Optional[str] = None
 
+class UserProfileCreate(UserProfileBase):
+    """创建个人资料"""
+    pass
 
-class UserProfileUpdate(BaseModel):
-    real_name: Optional[str] = None
-    gender: Optional[str] = None
-    school: Optional[str] = None
-    major: Optional[str] = None
-    grade: Optional[str] = None
-    age: Optional[int] = None
-    phone: Optional[str] = None
-    email: Optional[str] = None
-    bio: Optional[str] = None
+class UserProfileUpdate(UserProfileBase):
+    """更新个人资料"""
+    pass
 
-    # ===== 新增字段 =====
-    interest: Optional[str] = None
-    skills: Optional[str] = None
-    target_preference: Optional[str] = None
-    career_goal: Optional[str] = None
-
-
-class UserProfileResponse(BaseModel):
+class UserProfileResponse(UserProfileBase):
     profile_id: int
     user_id: int
     avatar: Optional[str] = None
-    real_name: Optional[str] = None
-    gender: Optional[str] = None
-    school: Optional[str] = None
-    major: Optional[str] = None
-    grade: Optional[str] = None
-    age: Optional[int] = None
-    phone: Optional[str] = None
-    email: Optional[str] = None
-    bio: Optional[str] = None
+    updated_at: datetime
 
-    # ===== 新增字段 =====
-    interest: Optional[str] = None
-    skills: Optional[str] = None
-    target_preference: Optional[str] = None
-    career_goal: Optional[str] = None
+    class Config:
+        from_attributes = True
 
-    model_config = ConfigDict(from_attributes=True)
+# ========= 能力评估相关 =========
+class AssessmentQuestionResponse(BaseModel):
+    id: int
+    dimension: str
+    question_text: str
+    order_num: int
 
+    class Config:
+        from_attributes = True
 
-# ========= 发展路径推荐模块 =========
-class CareerPathCreate(BaseModel):
-    user_id: int
-    job_score: float = 0.0
-    graduate_score: float = 0.0
-    civil_service_score: float = 0.0
-    abroad_score: float = 0.0
-    recommend_path: str
-    analysis_text: Optional[str] = None
+class AssessmentSubmit(BaseModel):
+    answers: Dict[int, int]  # {question_id: score}
 
+class AssessmentResultResponse(BaseModel):
+    scores: Dict[str, float]
+    overall_level: str
+    suggestions: str
+    radar_data: Dict[str, float]
+    created_at: datetime
 
-class CareerPathUpdate(BaseModel):
-    job_score: Optional[float] = None
-    graduate_score: Optional[float] = None
-    civil_service_score: Optional[float] = None
-    abroad_score: Optional[float] = None
+class AssessmentHistoryResponse(BaseModel):
+    id: int
+    scores: Dict[str, float]
+    overall_level: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# ========= 发展路径相关 =========
+class CareerPathBase(BaseModel):
+    job_score: Optional[float] = 0.0
+    graduate_score: Optional[float] = 0.0
+    civil_service_score: Optional[float] = 0.0
+    abroad_score: Optional[float] = 0.0
     recommend_path: Optional[str] = None
     analysis_text: Optional[str] = None
 
+class CareerPathCreate(CareerPathBase):
+    pass
 
-class CareerPathResponse(BaseModel):
+class CareerPathUpdate(CareerPathBase):
+    pass
+
+class CareerPathResponse(CareerPathBase):
     path_id: int
     user_id: int
-    job_score: float
-    graduate_score: float
-    civil_service_score: float
-    abroad_score: float
-    recommend_path: str
-    analysis_text: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True
 
-
-# ========= 职业推荐模块 =========
-class CareerCreate(BaseModel):
+# ========= 职业相关 =========
+class CareerBase(BaseModel):
     career_name: str
     category: Optional[str] = None
     industry: Optional[str] = None
@@ -130,38 +130,16 @@ class CareerCreate(BaseModel):
     recommend_path: Optional[str] = "就业"
     is_active: Optional[bool] = True
 
+class CareerCreate(CareerBase):
+    pass
 
-class CareerUpdate(BaseModel):
-    career_name: Optional[str] = None
-    category: Optional[str] = None
-    industry: Optional[str] = None
-    education_require: Optional[str] = None
-    avg_salary: Optional[int] = None
-    growth_potential: Optional[str] = None
-    suitable_major: Optional[str] = None
-    suitable_skills: Optional[str] = None
-    skill_require: Optional[str] = None
-    description: Optional[str] = None
-    work_content: Optional[str] = None
-    recommend_path: Optional[str] = None
-    is_active: Optional[bool] = None
+class CareerUpdate(CareerBase):
+    pass
 
-
-class CareerResponse(BaseModel):
+class CareerResponse(CareerBase):
     career_id: int
-    career_name: str
-    category: Optional[str] = None
-    industry: Optional[str] = None
-    education_require: Optional[str] = None
-    avg_salary: Optional[int] = None
-    growth_potential: Optional[str] = None
-    suitable_major: Optional[str] = None
-    suitable_skills: Optional[str] = None
-    skill_require: Optional[str] = None
-    description: Optional[str] = None
-    work_content: Optional[str] = None
-    recommend_path: Optional[str] = None
-    is_active: bool
+    created_at: datetime
+    updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -206,3 +184,8 @@ class CareerRecommendationResponse(BaseModel):
     path_result: CareerPathResponse
     career_list: List[CareerRecommendationItem]
     advice_list: List[str] = Field(default_factory=list)
+
+# ========= 通用响应 =========
+class MessageResponse(BaseModel):
+    message: str
+    success: bool = True

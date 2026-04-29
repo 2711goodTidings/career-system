@@ -336,7 +336,7 @@ const functionCards = [
     title: '能力评估',
     en: 'ABILITY',
     desc: '从多个维度了解你的能力基础与发展优势。',
-    path: '/ability'
+    path: '/assessment'
   },
   {
     title: '职业规划',
