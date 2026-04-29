@@ -1,5 +1,7 @@
 <template>
   <div class="assessment-page">
+    <FeaturePageNav current="ability" />
+
     <div class="container">
       <h1>📊 能力评估</h1>
       <p class="subtitle">请根据您的真实情况回答以下问题，结果将结合您的兴趣和成绩进行个性化分析</p>
@@ -90,8 +92,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getQuestions, submitAssessment } from '../api/assessment'
+import FeaturePageNav from '../components/FeaturePageNav.vue'
+import { useUserStore } from '../stores/user'
 
 const router = useRouter()
+const userStore = useUserStore()
 const questions = ref([])
 const answers = ref({})
 const loading = ref(true)
@@ -132,12 +137,21 @@ const goToHome = () => {
 }
 
 const getUserId = () => {
+  if (userStore.userId) {
+    return String(userStore.userId)
+  }
+
   let userId = localStorage.getItem('userId')
   if (!userId) {
     userId = 'user_' + Date.now()
     localStorage.setItem('userId', userId)
   }
   return userId
+}
+
+const getCurrentUserId = () => {
+  const id = Number(userStore.userId)
+  return Number.isFinite(id) && id > 0 ? id : null
 }
 
 const saveAnswersToLocal = () => {
@@ -231,7 +245,7 @@ const handleSubmit = async () => {
   
   submitting.value = true
   try {
-    const res = await submitAssessment(answers.value)
+    const res = await submitAssessment(answers.value, getCurrentUserId())
     result.value = res.data
     submitted.value = true
     

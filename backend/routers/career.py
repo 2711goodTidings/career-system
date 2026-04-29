@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Career, CareerPath, UserProfile
+from models import AssessmentRecord, Career, CareerPath, UserProfile
 from schemas import (
     CareerCreate,
     CareerUpdate,
@@ -254,46 +254,62 @@ def text_match_score(user_text: str | None, target_text: str | None, default_no_
 def get_default_ability_snapshot() -> dict:
     return {
         "logic": 75.0,
+        "innovation": 70.0,
         "communication": 68.0,
-        "execution": 72.0,
-        "research": 64.0,
-        "stability": 70.0,
-        "english": 62.0,
-        "skill_practice": 74.0,
-        "adaptability": 66.0,
+        "learning": 72.0,
+        "pressure": 66.0,
+        "leadership": 64.0,
     }
 
 
-def calc_path_result(profile: UserProfile):
+def get_latest_ability_snapshot(user_id: int, db: Session) -> dict:
     ability = get_default_ability_snapshot()
+    latest_record = (
+        db.query(AssessmentRecord)
+        .filter(AssessmentRecord.user_id == user_id)
+        .order_by(AssessmentRecord.created_at.desc())
+        .first()
+    )
+
+    if latest_record and isinstance(latest_record.scores, dict):
+        for key in ability:
+            value = latest_record.scores.get(key)
+            if isinstance(value, (int, float)):
+                ability[key] = float(value)
+
+    return ability
+
+
+def calc_path_result(profile: UserProfile, db: Session):
+    ability = get_latest_ability_snapshot(profile.user_id, db)
 
     ability_score_map = {
         "就业": round(
-            0.40 * ability["execution"]
-            + 0.30 * ability["skill_practice"]
-            + 0.15 * ability["communication"]
-            + 0.15 * ability["logic"],
+            0.30 * ability["communication"]
+            + 0.25 * ability["learning"]
+            + 0.25 * ability["logic"]
+            + 0.20 * ability["pressure"],
             2,
         ),
         "考研": round(
             0.40 * ability["logic"]
-            + 0.30 * ability["research"]
-            + 0.15 * ability["execution"]
-            + 0.15 * ability["english"],
+            + 0.35 * ability["learning"]
+            + 0.15 * ability["pressure"]
+            + 0.10 * ability["innovation"],
             2,
         ),
         "考公": round(
-            0.40 * ability["stability"]
+            0.35 * ability["pressure"]
             + 0.25 * ability["communication"]
-            + 0.20 * ability["execution"]
+            + 0.25 * ability["leadership"]
             + 0.15 * ability["logic"],
             2,
         ),
         "留学": round(
-            0.45 * ability["english"]
-            + 0.20 * ability["logic"]
-            + 0.20 * ability["adaptability"]
-            + 0.15 * ability["research"],
+            0.35 * ability["learning"]
+            + 0.25 * ability["communication"]
+            + 0.20 * ability["innovation"]
+            + 0.20 * ability["pressure"],
             2,
         ),
     }
@@ -529,7 +545,7 @@ def get_career_recommendation(user_id: int, db: Session = Depends(get_db)):
     if not profile:
         raise HTTPException(status_code=404, detail="请先完善个人信息后再生成职业发展推荐")
 
-    ability_snapshot_dict, score_map, recommend_path, analysis_text = calc_path_result(profile)
+    ability_snapshot_dict, score_map, recommend_path, analysis_text = calc_path_result(profile, db)
 
     path_record = upsert_career_path(
         user_id=user_id,
@@ -572,7 +588,7 @@ def recommend_careers(user_id: int, db: Session = Depends(get_db)):
     if not profile:
         raise HTTPException(status_code=404, detail="请先完善个人信息")
 
-    _, score_map, recommend_path, analysis_text = calc_path_result(profile)
+    _, score_map, recommend_path, analysis_text = calc_path_result(profile, db)
 
     upsert_career_path(
         user_id=user_id,

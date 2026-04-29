@@ -146,13 +146,11 @@ class CareerResponse(CareerBase):
 # ========= 综合职业发展推荐返回 =========
 class AbilitySnapshot(BaseModel):
     logic: float
+    innovation: float
     communication: float
-    execution: float
-    research: float
-    stability: float
-    english: float
-    skill_practice: float
-    adaptability: float
+    learning: float
+    pressure: float
+    leadership: float
 
 
 class CareerRecommendationItem(BaseModel):

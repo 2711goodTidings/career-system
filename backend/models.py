@@ -52,7 +52,7 @@ class AssessmentQuestion(Base):
     __tablename__ = "assessment_questions"
     
     id = Column(Integer, primary_key=True, index=True)
-    dimension = Column(String(50), nullable=False)  # 所属维度：logic, innovation, communication, learning, pressure, leadership
+    dimension = Column(String(50), nullable=False)  # logic, innovation, communication, learning, pressure, leadership
     question_text = Column(String(500), nullable=False)  # 题目内容
     order_num = Column(Integer, default=0)  # 排序
 

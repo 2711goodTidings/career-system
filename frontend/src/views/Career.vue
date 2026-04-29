@@ -259,14 +259,12 @@ const pathScoreList = computed(() => [
 const abilityList = computed(() => {
   const ability = recommendation.value?.ability_snapshot || {}
   return [
-    { key: 'logic', label: '逻辑能力', value: ability.logic },
-    { key: 'communication', label: '沟通表达', value: ability.communication },
-    { key: 'execution', label: '执行能力', value: ability.execution },
-    { key: 'research', label: '研究倾向', value: ability.research },
-    { key: 'stability', label: '稳定性', value: ability.stability },
-    { key: 'english', label: '英语能力', value: ability.english },
-    { key: 'skill_practice', label: '技能实践', value: ability.skill_practice },
-    { key: 'adaptability', label: '适应能力', value: ability.adaptability }
+    { key: 'logic', label: '逻辑思维', value: ability.logic },
+    { key: 'innovation', label: '创新能力', value: ability.innovation },
+    { key: 'communication', label: '沟通协作', value: ability.communication },
+    { key: 'learning', label: '学习能力', value: ability.learning },
+    { key: 'pressure', label: '抗压能力', value: ability.pressure },
+    { key: 'leadership', label: '领导力', value: ability.leadership }
   ]
 })
 
