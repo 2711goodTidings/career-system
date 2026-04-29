@@ -1,5 +1,5 @@
-from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from typing import Optional, List
+from pydantic import BaseModel, ConfigDict, Field
 
 
 # ========= 注册登录模块 =========
@@ -164,3 +164,45 @@ class CareerResponse(BaseModel):
     is_active: bool
 
     model_config = ConfigDict(from_attributes=True)
+
+# ========= 综合职业发展推荐返回 =========
+class AbilitySnapshot(BaseModel):
+    logic: float
+    communication: float
+    execution: float
+    research: float
+    stability: float
+    english: float
+    skill_practice: float
+    adaptability: float
+
+
+class CareerRecommendationItem(BaseModel):
+    career_id: int
+    career_name: str
+    category: Optional[str] = None
+    industry: Optional[str] = None
+    education_require: Optional[str] = None
+    avg_salary: Optional[int] = None
+    growth_potential: Optional[str] = None
+    suitable_major: Optional[str] = None
+    suitable_skills: Optional[str] = None
+    skill_require: Optional[str] = None
+    description: Optional[str] = None
+    work_content: Optional[str] = None
+    recommend_path: Optional[str] = None
+    is_active: bool
+
+    match_score: float
+    reasons: List[str] = Field(default_factory=list)
+    gap_skills: List[str] = Field(default_factory=list)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CareerRecommendationResponse(BaseModel):
+    user_id: int
+    ability_snapshot: AbilitySnapshot
+    path_result: CareerPathResponse
+    career_list: List[CareerRecommendationItem]
+    advice_list: List[str] = Field(default_factory=list)

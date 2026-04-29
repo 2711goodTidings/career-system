@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="page">
     <!-- HERO -->
     <div class="brand-bar">
@@ -53,51 +53,46 @@
 
         <div class="intro-text">
           我们的智能职业规划平台致力于为大学生提供个性化的职业路径推荐。<br />
-          基于先进的数据分析与人工智能，系统不仅帮助用户识别潜在发展方向，<br />
-          还能够结合兴趣、能力、学习表现与职业需求进行综合评估，<br />
+          基于数据分析与智能评估，系统帮助用户识别潜在的发展方向，<br />
+          并结合兴趣、能力、学习表现与职业需求进行综合判断，<br />
           生成更具针对性的成长建议与发展路径参考。
         </div>
       </div>
     </section>
 
-    <!-- 登录区 -->
+    <!-- 鐧诲綍鍖?-->
     <div ref="loginRef">
       <LoginSection
           @login-success="handleLoginSuccess"
       />
     </div>
 
-    <!-- 未登录提示区 -->
+    <!-- 鏈櫥褰曟彁绀哄尯 -->
     <section v-if="!userStore.isLogin" class="unlock-section">
       <div class="unlock-box">
         <p class="unlock-kicker">LOCKED MODULES</p>
-        <h2 class="unlock-title">Login to unlock more features</h2>
-        <p class="unlock-desc">
-          After signing in, you can access your profile, ability evaluation,
-          career recommendation, and intelligent planning modules.
-        </p>
+        <p class="unlock-desc">登录后可使用个人信息、能力评估、职业规划与成长规划功能。</p>
 
         <div class="unlock-actions">
-          <button class="login-btn" @click="scrollToLogin">GO TO LOGIN</button>
+          <button class="login-btn" @click="scrollToLogin">去登录</button>
         </div>
       </div>
     </section>
 
-    <!-- 功能区：只有登录后才显示 -->
+    <!-- 鍔熻兘鍖猴細鍙湁鐧诲綍鍚庢墠鏄剧ず -->
     <section v-if="userStore.isLogin" class="function-section" ref="functionRef">
       <div class="function-sticky">
         <div class="function-layout">
           <div class="function-left">
-            <p class="function-kicker">FUNCTIONS</p>
-            <h2 class="function-title">Here at every step</h2>
+            <p class="function-kicker">功能模块</p>
+            <h2 class="function-title">每一步都有方向</h2>
             <p class="function-desc">
-              Build your profile, evaluate your abilities, discover suitable careers,
-              and generate an intelligent growth roadmap within one integrated system.
+              完善个人信息，评估核心能力，发现适合的职业方向，并生成清晰的成长规划。
             </p>
 
             <div class="function-hint">
               <span class="hint-dot"></span>
-              <span>{{ cardsExpanded ? 'Click a card to enter' : 'Click to expand cards' }}</span>
+              <span>{{ cardsExpanded ? '点击卡片进入页面' : '点击展开功能卡片' }}</span>
             </div>
           </div>
 
@@ -190,7 +185,7 @@ const goFunctionPage = (item) => {
 }
 
 /* =========================
-   粒子效果
+   绮掑瓙鏁堟灉
 ========================= */
 let ctx = null
 let canvas = null
@@ -285,12 +280,12 @@ const handleMouseLeave = () => {
 }
 
 /* =========================
-   工具
+   宸ュ叿
 ========================= */
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max)
 
 /* =========================
-   简介横条滚动
+   绠€浠嬫í鏉℃粴鍔?
 ========================= */
 const stripProgress = ref(0)
 
@@ -311,7 +306,7 @@ const handleIntroProgress = () => {
 const strip1Width = computed(() => `${100 - 50 * stripProgress.value}%`)
 const strip2Width = computed(() => `${100 - 34 * stripProgress.value}%`)
 const strip3Width = computed(() => `${100 - 17 * stripProgress.value}%`)
-// 登录成功：解锁功能区 + 自动展开 + 自动滚动
+// 鐧诲綍鎴愬姛锛氳В閿佸姛鑳藉尯 + 鑷姩灞曞紑 + 鑷姩婊氬姩
 const handleLoginSuccess = () => {
   setTimeout(() => {
     functionRef.value?.scrollIntoView({
@@ -322,37 +317,37 @@ const handleLoginSuccess = () => {
   }, 500)
 }
 
-// —————————— 刷新自动关闭卡片 ——————————
+// 鈥斺€斺€斺€斺€斺€斺€斺€斺€斺€?鍒锋柊鑷姩鍏抽棴鍗＄墖 鈥斺€斺€斺€斺€斺€斺€斺€斺€斺€?
 onMounted(() => {
   cardsExpanded.value = false
 })
 
 /* =========================
-   功能卡片数据
+   鍔熻兘鍗＄墖鏁版嵁
 ========================= */
 const functionCards = [
   {
     title: '个人信息',
     en: 'PROFILE',
-    desc: 'Manage your personal background, major, interests and key skill profile.',
+    desc: '整理你的个人背景、专业方向、兴趣偏好和已有技能。',
     path: '/profile'
   },
   {
     title: '能力评估',
     en: 'ABILITY',
-    desc: 'Evaluate core abilities from learning performance and multiple competence dimensions.',
+    desc: '从多个维度了解你的能力基础与发展优势。',
     path: '/ability'
   },
   {
-    title: '职业推荐',
+    title: '职业规划',
     en: 'CAREER',
-    desc: 'Match suitable career directions based on your profile, strengths and assessment results.',
+    desc: '结合个人资料与能力画像，匹配适合的职业方向。',
     path: '/career'
   },
   {
     title: '成长规划',
     en: 'PLANNING',
-    desc: 'Generate an intelligent roadmap for skills, goals and long-term development planning.',
+    desc: '生成技能补强、目标拆解和长期发展的成长路线。',
     path: '/planning'
   }
 ]
@@ -421,7 +416,7 @@ onBeforeUnmount(() => {
 }
 
 .brand-bar {
-  position: absolute;
+  position: fixed;
   top: 28px;
   left: 34px;
   z-index: 20;
@@ -429,7 +424,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 16px;
   padding: 10px 16px;
-  background: #35568a;
+  background: #93A4C1;
   backdrop-filter: blur(8px);
   border-radius: 0;
   height: 60px;
@@ -457,7 +452,7 @@ onBeforeUnmount(() => {
 .page {
   width: 100%;
   min-height: 100vh;
-  background: #d9d6d1;
+  background: #E7E8E4;
 }
 
 .section {
@@ -470,7 +465,7 @@ onBeforeUnmount(() => {
 .hero-section {
   min-height: 100vh;
   background:
-    linear-gradient(rgba(131, 72, 120, 0.58), rgba(131, 72, 120, 0.58)),
+    linear-gradient(rgba(147, 164, 193, 0.58), rgba(147, 164, 193, 0.58)),
     url('../public/images/head.jpg') center center / cover no-repeat;
 }
 
@@ -587,10 +582,10 @@ onBeforeUnmount(() => {
   margin-bottom: 40px;
 }
 
-/* 简介区 */
+/* 绠€浠嬪尯 */
 .intro-section {
   position: relative;
-  background: #d9d6d1;
+  background: #E7E8E4;
 }
 
 .intro-text {
@@ -611,7 +606,7 @@ onBeforeUnmount(() => {
   position: relative;
   width: 100%;
   height: 450px;
-  background: #d9d6d1;
+  background: #E7E8E4;
   overflow: hidden;
 }
 
@@ -620,7 +615,7 @@ onBeforeUnmount(() => {
   right: 0;
   height: 150px;
   width: 100%;
-  background: #834878;
+  background: #8D97A7;
   transition: width 0.08s linear;
 }
 
@@ -629,8 +624,7 @@ onBeforeUnmount(() => {
 .strip-3 { bottom: 300px; }
 
 
-.login-actions,
-.unlock-actions {
+.login-actions {
   display: flex;
   gap: 14px;
   margin-top: 8px;
@@ -654,54 +648,83 @@ onBeforeUnmount(() => {
 
 
 
-/* 未登录提示区 */
+/* 鏈櫥褰曟彁绀哄尯 */
 .unlock-section {
-  min-height: 62vh;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 80px 24px 120px;
-  background: #d9d6d1;
+  padding: 0;
+  background: #E7E8E4;
 }
 
 .unlock-box {
-  width: min(920px, 100%);
-  padding: 54px 56px;
-  border: 1px solid rgba(53, 86, 138, 0.18);
-  background: rgba(255,255,255,0.62);
-  box-shadow: 0 18px 40px rgba(53, 86, 138, 0.08);
-  backdrop-filter: blur(6px);
+  width: 100%;
+  min-height: 86px;
+  padding: 18px 34px;
+  border: none;
+  background: #93A4C1;
+  box-shadow: none;
+  backdrop-filter: none;
+  display: grid;
+  grid-template-columns: 1fr auto minmax(320px, 620px) 1fr auto;
+  justify-content: stretch;
+  align-items: center;
+  gap: 18px;
 }
 
 .unlock-kicker {
+  grid-column: 2;
   font-size: 12px;
   letter-spacing: 2.4px;
-  color: rgba(53, 86, 138, 0.72);
-  margin-bottom: 18px;
-}
-
-.unlock-title {
-  font-size: clamp(34px, 5vw, 72px);
-  line-height: 0.95;
-  letter-spacing: -2px;
-  color: #2336c1;
-  margin-bottom: 24px;
+  color: rgba(255, 255, 255, 0.78);
+  margin: 0;
+  white-space: nowrap;
 }
 
 .unlock-desc {
-  max-width: 650px;
-  font-size: 18px;
-  line-height: 1.7;
-  color: #35568a;
+  grid-column: 3;
+  max-width: none;
+  font-size: 16px;
+  line-height: 1.5;
+  color: white;
+  margin: 0;
 }
 
-/* 功能区 */
+.unlock-actions {
+  margin-top: 0;
+  grid-column: 5;
+}
+
+/* 鍔熻兘鍖?*/
 .function-section {
   position: relative;
   height: 100vh;
   min-height: 860px;
-  background: #d9d6d1;
+  background: #E7E8E4;
   overflow: hidden;
+}
+
+.function-section::before {
+  content: "";
+  position: absolute;
+  top: 76px;
+  left: 60px;
+  right: 60px;
+  height: 1px;
+  background: rgba(63, 79, 92, 0.72);
+  z-index: 2;
+}
+
+.function-section::after {
+  content: "";
+  position: absolute;
+  left: 36%;
+  top: 76px;
+  bottom: 0;
+  width: 1px;
+  background: rgba(63, 79, 92, 0.72);
+  z-index: 2;
 }
 
 .function-sticky {
@@ -711,6 +734,17 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   padding: 0 60px;
+}
+
+.function-sticky::before {
+  content: "";
+  position: absolute;
+  left: 66%;
+  top: 76px;
+  bottom: 0;
+  width: 1px;
+  background: rgba(63, 79, 92, 0.56);
+  z-index: 1;
 }
 
 .function-layout {
@@ -723,33 +757,34 @@ onBeforeUnmount(() => {
 
 .function-left {
   position: relative;
-  padding-right: 24px;
+  padding-left: 72px;
+  padding-right: 0;
 }
 
 .function-kicker {
   font-size: 12px;
   letter-spacing: 2.4px;
-  color: rgba(53, 86, 138, 0.72);
+  color: rgba(63, 79, 92, 0.72);
   margin-bottom: 18px;
 }
 
 .function-title {
-  font-size: clamp(80px, 10vw, 152px);
-  line-height: 0.9;
-  letter-spacing: -5px;
+  font-size: clamp(56px, 6.4vw, 104px);
+  line-height: 1;
+  letter-spacing: 0;
   font-weight: 600;
-  color: #2336c1;
-  margin: 0 0 44px;
+  color: #3f4f5c;
+  margin: 0 0 28px;
   max-width: 520px;
 }
 
 .function-desc {
-  max-width: 360px;
-  font-size: 22px;
-  line-height: 1.25;
-  color: #35568a;
-  font-family: "Courier New", monospace;
-  text-transform: uppercase;
+  max-width: 430px;
+  font-size: 18px;
+  line-height: 1.65;
+  color: #3f4f5c;
+  font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  text-transform: none;
   margin: 0;
 }
 
@@ -758,18 +793,18 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: rgba(53, 86, 138, 0.62);
+  color: rgba(63, 79, 92, 0.68);
   font-size: 12px;
-  letter-spacing: 1.8px;
-  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-transform: none;
 }
 
 .hint-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #2336c1;
-  box-shadow: 0 0 0 6px rgba(35, 54, 193, 0.08);
+  background: #3f4f5c;
+  box-shadow: 0 0 0 6px rgba(63, 79, 92, 0.1);
 }
 
 .function-right {
@@ -787,18 +822,10 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
-.fan-stage::before,
 .fan-stage::after {
   content: "";
   position: absolute;
   background: rgba(53, 86, 138, 0.55);
-}
-
-.fan-stage::before {
-  left: 52%;
-  top: -30px;
-  width: 1px;
-  height: 112%;
 }
 
 .fan-stage::after {
@@ -857,7 +884,7 @@ onBeforeUnmount(() => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  color: #2336c1;
+  color: #3f4f5c;
 }
 
 .fan-card-title {
@@ -888,12 +915,12 @@ onBeforeUnmount(() => {
 
 .fan-card-text {
   margin: 0;
-  max-width: 86%;
+  max-width: 90%;
   font-size: 14px;
-  line-height: 1.45;
-  color: #4c63c9;
-  font-family: "Courier New", monospace;
-  text-transform: uppercase;
+  line-height: 1.55;
+  color: #3f4f5c;
+  font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  text-transform: none;
 }
 
 .fan-card-bottom {
@@ -901,7 +928,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: rgba(53, 86, 138, 0.72);
+  color: rgba(63, 79, 92, 0.72);
   font-size: 12px;
   letter-spacing: 1.6px;
   text-transform: uppercase;
@@ -912,7 +939,7 @@ onBeforeUnmount(() => {
 }
 
 .fan-card-open {
-  color: #2336c1;
+  color: #3f4f5c;
 }
 
 @media (max-width: 1320px) {
@@ -927,6 +954,7 @@ onBeforeUnmount(() => {
   }
 
   .function-left {
+    padding-left: 28px;
     padding-right: 0;
   }
 
@@ -936,8 +964,8 @@ onBeforeUnmount(() => {
 
   .function-desc {
     max-width: 760px;
-    font-size: 18px;
-    line-height: 1.5;
+    font-size: 16px;
+    line-height: 1.6;
   }
 
   .function-right {
@@ -988,13 +1016,14 @@ onBeforeUnmount(() => {
   }
 
   .function-title {
-    font-size: clamp(56px, 12vw, 92px);
-    letter-spacing: -2px;
+    font-size: clamp(48px, 10vw, 78px);
+    letter-spacing: 0;
   }
 
   .function-right {
     height: 620px;
   }
+
 
   .fan-stage {
     height: 560px;
@@ -1057,12 +1086,47 @@ onBeforeUnmount(() => {
     padding-right: 12px;
   }
 
+  .unlock-box {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 10px;
+  }
+
+  .unlock-kicker,
+  .unlock-desc,
   .unlock-actions {
-    flex-direction: column;
+    grid-column: auto;
+  }
+
+  .unlock-actions {
+    width: 100%;
+  }
+
+  .unlock-actions .login-btn {
+    width: 100%;
   }
 
   .function-sticky {
     padding: 0 18px;
+  }
+
+  .function-section::before {
+    left: 18px;
+    right: 18px;
+    top: 62px;
+    height: 1px;
+  }
+
+  .function-section::after {
+    left: 34%;
+    top: 62px;
+    bottom: 0;
+    width: 1px;
+  }
+
+  .function-sticky::before {
+    left: 70%;
+    top: 62px;
   }
 
   .function-right {
@@ -1097,3 +1161,7 @@ onBeforeUnmount(() => {
   }
 }
 </style>
+
+
+
+

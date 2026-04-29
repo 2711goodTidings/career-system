@@ -136,7 +136,7 @@ const handleRegister = async () => {
 .login-section {
   width: 100%;
   min-height: 100vh;
-  background: #d9d6d1;
+  background: #E7E8E4;
   display: flex;
   align-items: center;
   justify-content: center;

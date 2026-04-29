@@ -9,7 +9,7 @@
 .register-page {
   min-height: 100vh;
   padding: 60px 40px;
-  background: #d9d8d1;
+  background: #E7E8E4;
   color: #2338c4;
 }
 </style>

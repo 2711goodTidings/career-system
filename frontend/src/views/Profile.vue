@@ -1,276 +1,200 @@
 <template>
-  <div class="profile-page">
-    <button class="back-btn" @click="goHome">BACK HOME</button>
+  <div class="profile-page" :style="{ backgroundImage: `url(${profileBackground})` }">
+    <FeaturePageNav current="profile" />
 
-    <div class="story-container" ref="storyContainerRef">
-      <!-- 第一屏 -->
-      <section class="story-section hero-section">
-        <div class="hero-card">
-          <div class="hero-top">
-            <div class="hero-date">2/0/2/6 / CAREER PLAN</div>
-            <div class="hero-note">
-              {{ form.bio || '填写你的个人简介' }}
-            </div>
-          </div>
+    <main class="book-stage">
+      <div class="page-count">{{ currentSpread + 1 }}/2</div>
 
-          <div class="hero-center">
-            <div class="hero-image-target" ref="heroImageTargetRef"></div>
-
-            <h1
-              class="hero-title"
-              :style="{
-                opacity: heroTitleOpacity,
-                transform: `translate(-50%, calc(-20% + ${heroProgress * -24}px))`
-              }"
-            >
-              PROFILE REPORT
-            </h1>
-          </div>
-
-          <div class="hero-summary" :style="{ opacity: 1 - heroProgress * 1.2 }">
-            <p><strong>姓名：</strong>{{ form.username || '未填写' }}</p>
-            <p><strong>学校：</strong>{{ form.school || '未填写' }}</p>
-            <p><strong>专业：</strong>{{ form.major || '未填写' }}</p>
-            <p><strong>目标倾向：</strong>{{ form.target_preference || '未填写' }}</p>
-          </div>
-        </div>
-
-        <div class="scroll-tip" :style="{ opacity: 1 - heroProgress * 1.4 }">
-          SCROLL TO EDIT
-        </div>
-      </section>
-
-      <!-- 第二屏 -->
-      <section class="story-section edit-section">
-        <div class="edit-stage">
-          <div class="edit-left">
-            <div class="edit-image-frame">
-              <p class="left-top-text">MY PROFILE</p>
-              <div class="edit-image-target" ref="editImageTargetRef">
-                <label class="change-avatar-btn">
+      <form class="profile-book" @submit.prevent="handleSubmit">
+        <section
+          class="book-page left-page"
+          :class="{ 'soft-flip': currentSpread === 1 }"
+          :style="{ '--paper-bg': `url(${paperBackground})` }"
+        >
+          <template v-if="currentSpread === 0">
+            <div class="profile-cover">
+              <div class="page-number">01</div>
+              <h1>PROFILE</h1>
+              <div class="avatar-sheet">
+                <img :src="avatarPreview || defaultAvatar" alt="avatar" />
+                <label class="avatar-upload">
                   更换头像
                   <input
+                    class="hidden-input"
                     type="file"
                     accept="image/*"
                     @change="handleAvatarChange"
-                    class="hidden-input"
                   />
                 </label>
               </div>
             </div>
-          </div>
+          </template>
 
-          <div
-            class="edit-right refined-edit-right"
-            :style="{
-              opacity: editContentOpacity,
-              transform: `translateY(${(1 - section2Progress) * 30}px)`
-            }"
-          >
-            <div class="edit-header refined-header">
-              <h2>EDIT YOUR PROFILE</h2>
+          <template v-else>
+            <div class="spread-panel">
+              <div class="page-number">03</div>
+              <button
+                type="button"
+                class="corner-turn prev-turn"
+                @click="currentSpread = 0"
+                aria-label="上一页"
+              >
+                <span aria-hidden="true"></span>
+              </button>
+              <div class="long-field">
+                <label>个人简介</label>
+                <textarea
+                  v-model="form.bio"
+                  rows="8"
+                  placeholder="请输入你的兴趣、能力特点、职业倾向等"
+                ></textarea>
+              </div>
+              <div class="long-field">
+                <label>兴趣方向</label>
+                <textarea
+                  v-model="form.interest"
+                  rows="8"
+                  placeholder="例如：人工智能、前端开发、数据分析、考研深造"
+                ></textarea>
+              </div>
             </div>
+          </template>
+        </section>
 
-            <form class="profile-form refined-form" @submit.prevent="handleSubmit">
-              <div class="form-block refined-block">
-                <div class="block-content">
-                  <h3>Basic Information</h3>
+        <section
+          class="book-page right-page"
+          :class="{ 'soft-flip': currentSpread === 1 }"
+          :style="{ '--paper-bg': `url(${paperBackground})` }"
+        >
+          <template v-if="currentSpread === 0">
+            <div class="basic-page">
+              <div class="page-number">02</div>
+              <button
+                type="button"
+                class="corner-turn next-turn"
+                @click="currentSpread = 1"
+                aria-label="下一页"
+              >
+                <span aria-hidden="true"></span>
+              </button>
+              <div class="field-list">
+                <div class="form-item">
+                  <label>姓名</label>
+                  <input v-model="form.username" type="text" placeholder="请输入姓名" />
+                </div>
 
-                  <div class="form-grid refined-grid">
-                    <div class="form-item">
-                      <label>姓名</label>
-                      <input v-model="form.username" type="text" placeholder="请输入姓名" />
-                    </div>
+                <div class="form-item">
+                  <label>性别</label>
+                  <select v-model="form.gender">
+                    <option value="">请选择性别</option>
+                    <option value="男">男</option>
+                    <option value="女">女</option>
+                  </select>
+                </div>
 
-                    <div class="form-item">
-                      <label>性别</label>
-                      <select v-model="form.gender">
-                        <option value="">请选择性别</option>
-                        <option value="男">男</option>
-                        <option value="女">女</option>
-                      </select>
-                    </div>
+                <div class="form-item">
+                  <label>年龄</label>
+                  <input v-model="form.age" type="number" placeholder="请输入年龄" />
+                </div>
 
-                    <div class="form-item">
-                      <label>年龄</label>
-                      <input v-model="form.age" type="number" placeholder="请输入年龄" />
-                    </div>
+                <div class="form-item">
+                  <label>电话</label>
+                  <input v-model="form.phone" type="text" maxlength="11" placeholder="请输入11位手机号" />
+                </div>
 
-                    <div class="form-item">
-                      <label>电话</label>
-                      <input
-                        v-model="form.phone"
-                        type="text"
-                        maxlength="11"
-                        placeholder="请输入11位手机号"
-                      />
-                    </div>
-                  </div>
+                <div class="form-item">
+                  <label>学校</label>
+                  <input v-model="form.school" type="text" placeholder="请输入学校" />
+                </div>
+
+                <div class="form-item">
+                  <label>专业</label>
+                  <input v-model="form.major" type="text" placeholder="请输入专业" />
+                </div>
+
+                <div class="form-item">
+                  <label>年级</label>
+                  <select v-model="form.grade">
+                    <option value="">请选择年级</option>
+                    <option value="大一">大一</option>
+                    <option value="大二">大二</option>
+                    <option value="大三">大三</option>
+                    <option value="大四">大四</option>
+                    <option value="研究生">研究生</option>
+                  </select>
+                </div>
+
+                <div class="form-item">
+                  <label>邮箱</label>
+                  <input v-model="form.email" type="email" placeholder="请输入邮箱" />
+                </div>
+
+                <div class="form-item full">
+                  <label>目标倾向</label>
+                  <select v-model="form.target_preference">
+                    <option value="">请选择目标倾向</option>
+                    <option value="就业">就业</option>
+                    <option value="考研">考研</option>
+                    <option value="考公">考公</option>
+                    <option value="出国">出国</option>
+                  </select>
                 </div>
               </div>
+            </div>
+          </template>
 
-              <div class="form-block refined-block">
-                <div class="block-content">
-                  <h3>Education & Contact</h3>
-
-                  <div class="form-grid refined-grid">
-                    <div class="form-item">
-                      <label>学校</label>
-                      <input v-model="form.school" type="text" placeholder="请输入学校" />
-                    </div>
-
-                    <div class="form-item">
-                      <label>专业</label>
-                      <input v-model="form.major" type="text" placeholder="请输入专业" />
-                    </div>
-
-                    <div class="form-item">
-                      <label>年级</label>
-                      <select v-model="form.grade">
-                        <option value="">请选择年级</option>
-                        <option value="大一">大一</option>
-                        <option value="大二">大二</option>
-                        <option value="大三">大三</option>
-                        <option value="大四">大四</option>
-                        <option value="研究生">研究生</option>
-                      </select>
-                    </div>
-
-                    <div class="form-item">
-                      <label>邮箱</label>
-                      <input
-                        v-model="form.email"
-                        type="email"
-                        placeholder="请输入邮箱"
-                      />
-                    </div>
-                  </div>
-                </div>
+          <template v-else>
+            <div class="spread-panel">
+              <div class="page-number">04</div>
+              <div class="long-field">
+                <label>已有技能</label>
+                <textarea
+                  v-model="form.skills"
+                  rows="8"
+                  placeholder="例如：Python、Java、Vue、MySQL、沟通表达"
+                ></textarea>
               </div>
-
-              <div class="form-block refined-block">
-                <div class="block-content">
-                  <h3>Personal Description</h3>
-
-                  <div class="form-grid one-col refined-grid">
-                    <div class="form-item full">
-                      <label>个人简介</label>
-                      <textarea
-                        v-model="form.bio"
-                        rows="5"
-                        placeholder="请输入你的兴趣、能力特点、职业倾向等"
-                      ></textarea>
-                    </div>
-                  </div>
-                </div>
+              <div class="long-field">
+                <label>职业目标</label>
+                <textarea
+                  v-model="form.career_goal"
+                  rows="8"
+                  placeholder="例如：希望进入互联网公司，从事 AI 研发或数据分析相关工作"
+                ></textarea>
               </div>
+            </div>
+          </template>
+        </section>
+      </form>
 
-              <div class="form-block refined-block">
-                <div class="block-content">
-                  <h3>Interest & Skills</h3>
-
-                  <div class="form-grid one-col refined-grid">
-                    <div class="form-item full">
-                      <label>兴趣方向</label>
-                      <textarea
-                        v-model="form.interest"
-                        rows="4"
-                        placeholder="请输入你的兴趣方向，例如：人工智能、前端开发、数据分析、考研深造"
-                      ></textarea>
-                    </div>
-
-                    <div class="form-item full">
-                      <label>已有技能</label>
-                      <textarea
-                        v-model="form.skills"
-                        rows="4"
-                        placeholder="请输入你已有的技能，例如：Python、Java、Vue、MySQL、沟通表达"
-                      ></textarea>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="form-block refined-block">
-                <div class="block-content">
-                  <h3>Career Preference</h3>
-
-                  <div class="form-grid refined-grid">
-                    <div class="form-item">
-                      <label>目标倾向</label>
-                      <select v-model="form.target_preference">
-                        <option value="">请选择目标倾向</option>
-                        <option value="就业">就业</option>
-                        <option value="考研">考研</option>
-                        <option value="考公">考公</option>
-                        <option value="出国">出国</option>
-                      </select>
-                    </div>
-
-                    <div class="form-item full">
-                      <label>职业目标</label>
-                      <textarea
-                        v-model="form.career_goal"
-                        rows="4"
-                        placeholder="请输入你的职业目标，例如：希望进入互联网大厂，从事AI研发或数据分析相关工作"
-                      ></textarea>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="form-actions refined-actions">
-                <div class="completion-box refined-completion">
-                  <span>PROFILE COMPLETION</span>
-                  <strong>{{ profileCompletion }}%</strong>
-                </div>
-                <button type="submit" class="save-btn refined-save-btn" :disabled="isSaving">
-                  {{ isSaving ? 'SAVING...' : 'SAVE PROFILE' }}
-                </button>
-              </div>
-            </form>
-          </div>
+      <div class="book-actions">
+        <div class="completion-box">
+          <span>PROFILE COMPLETION</span>
+          <strong>{{ profileCompletion }}%</strong>
         </div>
-      </section>
-    </div>
-
-    <!-- 共享图片层 -->
-    <div
-      v-if="sharedImageVisible"
-      class="shared-image-layer"
-      :style="sharedImageStyle"
-    >
-      <img
-        :src="avatarPreview || defaultAvatar"
-        alt="avatar"
-        class="shared-image"
-      />
-    </div>
+        <button type="button" class="save-btn" :disabled="isSaving" @click="handleSubmit">
+          {{ isSaving ? '保存中...' : '保存档案' }}
+        </button>
+      </div>
+    </main>
   </div>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, reactive, ref } from 'vue'
+import FeaturePageNav from '../components/FeaturePageNav.vue'
+import profileBackground from '../assets/profile_background.jpg'
+import paperBackground from '../assets/profile_background1.jpg'
 import { useUserStore } from '../stores/user.js'
 
-const router = useRouter()
 const userStore = useUserStore()
 
 const API_BASE = 'http://127.0.0.1:8000'
 const defaultAvatar =
   'https://cdn.jsdelivr.net/gh/evjdent/SuperTinyIcons/images/svg/user.svg'
 
-const storyContainerRef = ref(null)
-const heroImageTargetRef = ref(null)
-const editImageTargetRef = ref(null)
-
+const currentSpread = ref(0)
 const avatarPreview = ref('')
-const heroProgress = ref(0)
-const section2Progress = ref(0)
-
-const sharedImageStyle = ref({})
-const sharedImageVisible = ref(true)
 const isSaving = ref(false)
 const isLoadingProfile = ref(false)
 
@@ -289,48 +213,6 @@ const form = reactive({
   target_preference: '',
   career_goal: ''
 })
-
-const clamp = (v, min = 0, max = 1) => Math.min(max, Math.max(min, v))
-
-const updateScene = () => {
-  const container = storyContainerRef.value
-  const heroTarget = heroImageTargetRef.value
-  const editTarget = editImageTargetRef.value
-  if (!container || !heroTarget || !editTarget) return
-
-  const scrollTop = container.scrollTop
-  const vh = container.clientHeight || 1
-
-  heroProgress.value = clamp(scrollTop / vh)
-  section2Progress.value = clamp((scrollTop - vh * 0.15) / (vh * 0.85))
-
-  const start = heroTarget.getBoundingClientRect()
-  const end = editTarget.getBoundingClientRect()
-
-  const t = heroProgress.value
-  const lerp = (a, b, p) => a + (b - a) * p
-
-  const left = lerp(start.left, end.left, t)
-  const top = lerp(start.top, end.top, t)
-  const width = lerp(start.width, end.width, t)
-  const height = lerp(start.height, end.height, t)
-  const shadowBlur = lerp(8, 22, t)
-
-  sharedImageStyle.value = {
-    left: `${left}px`,
-    top: `${top}px`,
-    width: `${width}px`,
-    height: `${height}px`,
-    borderRadius: '0px',
-    boxShadow: `0 12px ${shadowBlur}px rgba(0,0,0,0.12)`,
-    opacity: scrollTop > vh * 1.25 ? 0 : 1
-  }
-
-  sharedImageVisible.value = scrollTop <= vh * 1.28
-}
-
-const heroTitleOpacity = computed(() => 1 - heroProgress.value * 1.05)
-const editContentOpacity = computed(() => 0.2 + section2Progress.value * 0.8)
 
 const profileCompletion = computed(() => {
   const fields = [
@@ -355,10 +237,6 @@ const profileCompletion = computed(() => {
 const validatePhone = (phone) => /^1\d{10}$/.test(phone)
 const validateEmail = (email) =>
   /^[A-Za-z0-9._%+-]+@(163\.com|qq\.com|gmail\.com)$/.test(email)
-
-const goHome = () => {
-  router.push('/')
-}
 
 const getCurrentUserId = () => {
   const id = Number(userStore.userId)
@@ -430,10 +308,6 @@ const loadProfile = async () => {
     if (data.avatar) {
       avatarPreview.value = `${API_BASE}${data.avatar}`
     }
-
-    requestAnimationFrame(() => {
-      updateScene()
-    })
   } catch (error) {
     console.error('加载个人信息失败：', error)
     alert(`加载个人信息失败：${error.message}`)
@@ -538,26 +412,11 @@ const handleAvatarChange = async (e) => {
   } catch (error) {
     console.error('头像上传失败：', error)
     alert(`头像上传失败：${error.message}`)
-  } finally {
-    requestAnimationFrame(() => {
-      updateScene()
-    })
   }
 }
 
 onMounted(() => {
-  updateScene()
   loadProfile()
-
-  const container = storyContainerRef.value
-  container?.addEventListener('scroll', updateScene, { passive: true })
-  window.addEventListener('resize', updateScene)
-})
-
-onBeforeUnmount(() => {
-  const container = storyContainerRef.value
-  container?.removeEventListener('scroll', updateScene)
-  window.removeEventListener('resize', updateScene)
 })
 </script>
 
@@ -567,261 +426,303 @@ onBeforeUnmount(() => {
 }
 
 .profile-page {
-  height: 100vh;
-  background: #1f5d95;
-  font-family: "Times New Roman", "Georgia", "PingFang SC", "Microsoft YaHei", serif;
-  color: #1f5d95;
-  overflow: hidden;
-  position: relative;
-}
-
-.story-container {
-  height: 100vh;
-  overflow-y: auto;
-  scroll-snap-type: y mandatory;
-  scroll-behavior: smooth;
-}
-
-.story-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.story-container::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.28);
-}
-
-.story-section {
   min-height: 100vh;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
+  overflow: hidden;
+  background-color: #8495A9;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: #1f2529;
+  font-family: "Times New Roman", "Georgia", "PingFang SC", "Microsoft YaHei", serif;
+}
+
+.book-stage {
+  min-height: 100vh;
+  padding: 86px 54px 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   position: relative;
 }
 
-.back-btn {
+.page-count {
   position: fixed;
-  top: 22px;
-  right: 22px;
-  z-index: 60;
-  border: none;
-  background: rgba(255, 255, 255, 0.92);
-  color: #1f5d95;
-  padding: 12px 18px;
-  font-size: 12px;
-  letter-spacing: 2px;
-  cursor: pointer;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  top: 26px;
+  right: 34px;
+  width: 78px;
+  height: 78px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #f2f0ea;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  z-index: 20;
+  backdrop-filter: blur(8px);
 }
 
-/* 第一屏 */
-.hero-section {
-  padding: 34px;
+.profile-book {
+  width: min(1240px, 100%);
+  min-height: 740px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  position: relative;
+  filter: drop-shadow(0 28px 34px rgba(0, 0, 0, 0.46));
+  perspective: 1600px;
+}
+
+.profile-book::before {
+  content: "";
+  position: absolute;
+  inset: 0 50% 0 auto;
+  width: 24px;
+  transform: translateX(50%);
+  z-index: 8;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.2),
+    rgba(255, 255, 255, 0.12) 42%,
+    rgba(0, 0, 0, 0.28)
+  );
+  pointer-events: none;
+}
+
+.book-page {
+  min-height: 740px;
+  padding: 54px 40px 42px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.45s ease, background 0.45s ease;
+}
+
+.book-page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    var(--paper-bg),
+    linear-gradient(rgba(0, 0, 0, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035), transparent 18%, rgba(0, 0, 0, 0.04));
+  background-size: cover, 100% 19px, 100% 100%;
+  background-position: center, 0 0, 0 0;
+  mix-blend-mode: multiply;
+  opacity: 0.8;
+}
+
+.left-page {
+  background: #efeee9;
+  border-radius: 2px 0 0 2px;
+}
+
+.right-page {
+  background: #93A4C1;
+  border-radius: 0 2px 2px 0;
+  color: #f1eee7;
+}
+
+.book-page.soft-flip {
+  transform: rotateY(0.8deg);
+}
+
+.profile-cover {
+  height: 100%;
+  min-height: 635px;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1f5d95;
+  transform: translateX(-34px);
 }
 
-.hero-card {
-  width: min(1040px, 100%);
-  min-height: 620px;
-  background: #f5f5f3;
+.profile-cover h1 {
+  margin: 0;
+  position: absolute;
+  left: -84px;
+  top: 49%;
+  transform: translateY(-50%) rotate(-90deg);
+  transform-origin: center;
+  color: #202322;
+  font-size: 88px;
+  line-height: 0.9;
+  letter-spacing: 2px;
+  font-weight: 600;
+  z-index: 5;
+}
+
+.avatar-sheet {
+  width: min(410px, 84%);
+  aspect-ratio: 0.82;
+  background: #7ea0c7;
+  transform: translateX(58px);
   position: relative;
-  padding: 26px 42px 60px;
-  box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.12),
-    0 0 0 1px rgba(255, 255, 255, 0.28) inset;
+  z-index: 2;
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.18);
 }
 
-.hero-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;
+.avatar-sheet img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  mix-blend-mode: luminosity;
+  opacity: 0.88;
 }
 
-.hero-date {
-  font-size: 18px;
-  letter-spacing: 6px;
-  color: #1f5d95;
+.avatar-upload {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  color: #111517;
+  border: none;
+  padding: 0;
+  font-size: 11px;
+  cursor: pointer;
+  background: transparent;
+  text-shadow: none;
 }
 
-.hero-note {
-  width: 230px;
-  text-align: left;
-  font-size: 18px;
-  line-height: 1.2;
-  color: #1f5d95;
+.hidden-input {
+  display: none;
+}
+
+.page-number {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%) rotate(-90deg);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  z-index: 4;
+}
+
+.right-page .page-number {
+  left: auto;
+  right: 10px;
+  color: #f1eee7;
+}
+
+.corner-turn {
+  position: absolute;
+  z-index: 6;
+  border: none;
+  background: transparent;
+  color: inherit;
+  width: 46px;
+  height: 28px;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0.78;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.corner-turn span {
+  position: absolute;
+  left: 7px;
+  right: 7px;
+  top: 50%;
+  height: 1.5px;
+  background: currentColor;
+  transform: translateY(-50%);
+}
+
+.corner-turn span::before,
+.corner-turn span::after {
+  content: "";
+  position: absolute;
+  width: 11px;
+  height: 1.5px;
+  background: currentColor;
+  top: 0;
+}
+
+.corner-turn:hover {
+  opacity: 1;
+}
+
+.next-turn {
+  right: 34px;
+  bottom: 30px;
+  color: #f1eee7;
+}
+
+.next-turn span::before,
+.next-turn span::after {
+  right: 0;
+  transform-origin: right center;
+}
+
+.next-turn span::before {
+  transform: rotate(34deg);
+}
+
+.next-turn span::after {
+  transform: rotate(-34deg);
+}
+
+.next-turn:hover {
+  transform: translateX(5px);
+}
+
+.prev-turn {
+  left: 34px;
+  bottom: 30px;
+  color: #252b29;
+}
+
+.prev-turn span::before,
+.prev-turn span::after {
+  left: 0;
+  transform-origin: left center;
+}
+
+.prev-turn span::before {
+  transform: rotate(-34deg);
+}
+
+.prev-turn span::after {
+  transform: rotate(34deg);
+}
+
+.prev-turn:hover {
+  transform: translateX(-5px);
+}
+
+.page-title {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 34px;
+  align-items: baseline;
+  margin: 84px 38px 34px 0;
+}
+
+.page-title span {
+  font-size: 12px;
+  line-height: 1.1;
+  font-weight: 700;
+  color: rgba(241, 238, 231, 0.82);
+}
+
+.page-title strong {
+  min-width: 0;
+  font-size: 20px;
+  font-weight: 500;
+  color: rgba(241, 238, 231, 0.72);
   word-break: break-word;
 }
 
-.hero-center {
-  position: relative;
-  height: 430px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.hero-image-target {
-  width: 250px;
-  height: 310px;
-  position: relative;
-  z-index: 1;
-}
-
-.hero-title {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  margin: 0;
-  font-size: 76px;
-  letter-spacing: 8px;
-  font-weight: 500;
-  color: #1f5d95;
-  z-index: 3;
-  white-space: nowrap;
-}
-
-.hero-summary {
-  position: absolute;
-  right: 42px;
-  bottom: 34px;
-  text-align: right;
-  font-size: 15px;
-  line-height: 1.7;
-  color: #1f5d95;
-}
-
-.hero-summary p {
-  margin: 0;
-}
-
-.scroll-tip {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #1f5d95;
-  font-size: 12px;
-  letter-spacing: 5px;
-}
-
-/* 第二屏 */
-.edit-section {
-  min-height: 100vh;
-  background: #f5f5f3;
-  display: flex;
-  align-items: center;
-  padding: 32px 38px;
-}
-
-.edit-stage {
-  width: 100%;
-  max-width: 1280px;
-  margin: 0 auto;
+.field-list {
   display: grid;
-  grid-template-columns: 400px minmax(0, 760px);
-  justify-content: center;
-  gap: 34px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px 34px;
+  padding: 78px 52px 0 0;
 }
 
-.edit-left {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-}
-
-.edit-image-frame {
-  position: relative;
-  width: 360px;
-  background: #7fa3c4;
-  padding: 20px 26px 12px;
-  min-height: 550px;
-  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.08);
-}
-
-.left-top-text {
-  margin: 0 0 14px;
-  color: #f5f5f3;
-  font-size: 16px;
-}
-
-.edit-image-target {
-  width: 100%;
-  height: 440px;
-  position: relative;
-}
-
-.edit-image-target .change-avatar-btn {
-  position: absolute;
-  bottom: -42px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 8px 16px;
-  background: transparent;
-  color: #1f5d95;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  cursor: pointer;
-  z-index: 10;
-}
-
-.edit-image-target .change-avatar-btn:hover {
-  text-decoration: underline;
-}
-
-.edit-right {
-  transition: 0.2s linear;
-}
-
-.refined-edit-right {
-  padding: 18px 12px 12px 0;
-  max-width: 760px;
-}
-
-.refined-header {
-  margin-bottom: 22px;
-}
-
-.refined-header h2 {
-  margin: 0;
-  font-size: 52px;
-  line-height: 1.02;
-  font-weight: 500;
-  letter-spacing: 1px;
-  color: #1f5d95;
-}
-
-.refined-form {
-  width: 100%;
-}
-
-.form-block {
-  margin-bottom: 22px;
-}
-
-.block-content h3 {
-  margin: 0 0 14px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #3d5a7a;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(170px, 1fr));
-}
-
-.refined-grid {
-  gap: 14px 16px;
-}
-
-.form-grid.one-col {
-  grid-template-columns: 1fr;
-}
-
-.form-item {
+.form-item,
+.long-field {
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
@@ -830,206 +731,244 @@ onBeforeUnmount(() => {
   grid-column: 1 / -1;
 }
 
-.form-item label {
-  margin-bottom: 6px;
-  font-size: 12px;
-  color: #5d84a8;
-  letter-spacing: 0.5px;
+label {
+  margin-bottom: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  color: inherit;
 }
 
-.hidden-input {
-  display: none;
+.form-item label,
+.long-field label {
+  color: #3f4f5c;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
 
-.form-item input,
-.form-item select,
-.form-item textarea {
+input,
+select,
+textarea {
   width: 100%;
-  border: none;
-  border-bottom: 1px solid rgba(79, 122, 162, 0.28);
+  border: 0;
+  border-bottom: 1px solid currentColor;
   background: transparent;
-  padding: 10px 2px 9px;
-  font-size: 14px;
-  color: #2a5e90;
-  outline: none;
-  font-family: inherit;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  color: inherit;
   border-radius: 0;
+  outline: none;
+  font: inherit;
+  font-size: 15px;
+  padding: 8px 0 9px;
 }
 
-.form-item input:focus,
-.form-item select:focus,
-.form-item textarea:focus {
-  border-bottom-color: #4f7aa2;
-  box-shadow: 0 8px 12px -12px rgba(79, 122, 162, 0.45);
+.right-page input,
+.right-page select,
+.right-page textarea {
+  color: rgba(241, 238, 231, 0.86);
+  border-bottom-color: rgba(241, 238, 231, 0.22);
 }
 
-.form-item textarea {
-  min-height: 92px;
-  resize: vertical;
-  padding-top: 10px;
+.left-page input,
+.left-page select,
+.left-page textarea {
+  color: #3f4f5c;
+  border-bottom-color: rgba(31, 37, 41, 0.28);
 }
 
-.form-actions {
-  margin-top: 4px;
-  padding-left: 34px;
+select option {
+  color: #252b29;
+}
+
+textarea {
+  min-height: 152px;
+  resize: none;
+  line-height: 1.45;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(241, 238, 231, 0.36);
+}
+
+.left-page input::placeholder,
+.left-page textarea::placeholder {
+  color: rgba(31, 37, 41, 0.38);
+}
+
+.spread-panel {
+  height: 100%;
+  min-height: 635px;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 40px;
+  padding: 54px 52px 28px;
+}
+
+.left-page .spread-panel {
+  color: #252b29;
+}
+
+.right-page .spread-panel {
+  color: #f1eee7;
+}
+
+.long-field textarea {
+  height: 190px;
+}
+
+.book-actions {
+  width: min(1240px, 100%);
+  margin-top: 18px;
   display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: space-between;
-}
-
-.completion-box {
-  gap: 10px;
-  font-size: 12px;
-  color: #5d84a8;
-  display: flex;
-  align-items: center;
-}
-
-.completion-box strong {
-  font-size: 18px;
-  font-weight: 500;
-  color: #1f5d95;
+  gap: 16px;
+  color: #f1eee7;
+  flex-wrap: wrap;
 }
 
 .save-btn {
-  background: #1f5d95;
-  color: #f5f5f3;
-  padding: 11px 18px;
-  font-size: 11px;
-  letter-spacing: 2px;
-  border-radius: 999px;
-  border: none;
+  border: 1px solid rgba(241, 238, 231, 0.42);
+  background: rgba(147, 164, 193, 0.88);
+  color: #1f2529;
+  padding: 11px 20px;
+  font-size: 13px;
   cursor: pointer;
-  box-shadow: none;
+  letter-spacing: 1px;
+  font-weight: 700;
+  transition: transform 0.2s ease, background 0.2s ease;
 }
 
 .save-btn:hover {
-  background: #6f9ac1;
-  color: #fff;
+  transform: translateY(-1px);
+  background: #f1eee7;
 }
 
 .save-btn:disabled {
-  opacity: 0.7;
+  opacity: 0.48;
   cursor: not-allowed;
+  transform: none;
 }
 
-/* 共享图片 */
-.shared-image-layer {
-  position: fixed;
-  z-index: 40;
-  overflow: hidden;
-  pointer-events: none;
-  transition: opacity 0.18s linear;
+.completion-box {
+  min-width: 210px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: rgba(241, 238, 231, 0.76);
+  font-size: 12px;
+  letter-spacing: 1px;
 }
 
-.shared-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+.completion-box strong {
+  color: #f1eee7;
+  font-size: 18px;
 }
 
-/* responsive */
-@media (max-width: 1100px) {
-  .edit-stage {
-    grid-template-columns: 1fr;
+@media (max-width: 980px) {
+  .profile-page {
+    overflow: auto;
   }
 
-  .edit-left {
+  .book-stage {
+    padding: 86px 18px 30px;
     justify-content: flex-start;
   }
 
-  .edit-image-frame {
-    width: min(420px, 100%);
+  .page-count {
+    width: 62px;
+    height: 62px;
+    font-size: 22px;
+    right: 18px;
+  }
+
+  .profile-book {
     min-height: auto;
-  }
-
-  .edit-image-target {
-    height: 420px;
-  }
-
-  .refined-edit-right {
-    max-width: none;
-    padding: 8px 0 0;
-  }
-}
-
-@media (max-width: 768px) {
-  .hero-section {
-    padding: 16px;
-  }
-
-  .hero-card {
-    padding: 18px 20px 28px;
-    min-height: 540px;
-  }
-
-  .hero-date,
-  .hero-note {
-    font-size: 14px;
-  }
-
-  .hero-note {
-    width: 150px;
-  }
-
-  .hero-center {
-    height: 340px;
-  }
-
-  .hero-image-target {
-    width: 180px;
-    height: 230px;
-  }
-
-  .hero-title {
-    font-size: 38px;
-    letter-spacing: 4px;
-  }
-
-  .hero-summary {
-    position: static;
-    margin-top: 18px;
-    text-align: center;
-  }
-
-  .scroll-tip {
-    letter-spacing: 3px;
-  }
-
-  .edit-section {
-    padding: 18px 16px 28px;
-    gap: 22px;
-  }
-
-  .edit-image-frame {
-    padding: 18px 18px 20px;
-  }
-
-  .edit-image-target {
-    height: 320px;
-  }
-
-  .refined-header h2 {
-    font-size: 38px;
-  }
-
-  .form-grid {
     grid-template-columns: 1fr;
   }
 
-  .form-actions {
-    padding-left: 0;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+  .profile-book::before {
+    display: none;
   }
 
-  .back-btn {
-    top: 14px;
-    right: 14px;
-    padding: 10px 14px;
+  .book-page {
+    min-height: auto;
+    padding: 34px 26px;
+  }
+
+  .left-page,
+  .right-page {
+    border-radius: 2px;
+  }
+
+  .profile-cover,
+  .spread-panel {
+    min-height: auto;
+  }
+
+  .profile-cover {
+    min-height: 470px;
+  }
+
+  .profile-cover h1 {
+    left: -72px;
+    font-size: 62px;
+  }
+
+  .avatar-sheet {
+    transform: translateX(34px);
+  }
+
+  .page-title {
+    margin: 40px 34px 28px 0;
+  }
+
+  .field-list {
+    grid-template-columns: 1fr;
+    padding-right: 34px;
+  }
+
+  .spread-panel {
+    padding: 42px 36px 24px;
+  }
+}
+
+@media (max-width: 560px) {
+  .book-stage {
+    padding-inline: 12px;
+  }
+
+  .book-page {
+    padding: 28px 20px;
+  }
+
+  .profile-cover h1 {
+    left: -58px;
+    font-size: 48px;
+  }
+
+  .avatar-sheet {
+    width: 72%;
+    transform: translateX(34px);
+  }
+
+  .page-title {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-right: 28px;
+  }
+
+  .spread-panel {
+    padding: 38px 30px 20px;
+  }
+
+  .book-actions {
+    justify-content: stretch;
+  }
+
+  .save-btn,
+  .completion-box {
+    flex: 1 1 100%;
   }
 }
 </style>

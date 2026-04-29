@@ -105,8 +105,8 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   background:
-    radial-gradient(circle at center, rgba(148, 179, 138, 0.14), transparent 34%),
-    #1f2a1d;
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.18), transparent 34%),
+    #93A4C1;
   opacity: 1;
   transition: opacity 0.7s ease;
   overflow: hidden;
@@ -316,8 +316,14 @@ onMounted(() => {
 }
 
 .logo-flat.moveCorner {
-  transform: translate(-860px, -440px) scale(0.22);
+  transform: translate(calc(80px - 50vw), calc(58px - 50vh)) scale(0.2);
   transition: transform 0.85s cubic-bezier(.72,.06,.2,.98), opacity 0.45s ease;
+}
+
+@media (max-width: 768px) {
+  .logo-flat.moveCorner {
+    transform: translate(calc(62px - 50vw), calc(46px - 50vh)) scale(0.2);
+  }
 }
 
 
