@@ -341,7 +341,7 @@ const functionCards = [
     title: '能力评估',
     en: 'ABILITY',
     desc: 'Evaluate core abilities from learning performance and multiple competence dimensions.',
-    path: '/ability'
+    path: '/assessment'
   },
   {
     title: '职业推荐',

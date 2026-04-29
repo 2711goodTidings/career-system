@@ -1,7 +1,9 @@
+import datetime 
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Boolean, Text
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from database import Base
+from sqlalchemy.types import JSON 
 
 
 # ========= 用户表 =========
@@ -14,7 +16,7 @@ class User(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     profile = relationship("UserProfile", back_populates="user", uselist=False)
-
+    assessment_records = relationship("AssessmentRecord", back_populates="user")
 
 # ========= 用户个人信息表 =========
 class UserProfile(Base):
@@ -44,6 +46,29 @@ class UserProfile(Base):
 
     user = relationship("User", back_populates="profile")
 
+# ========= 能力评估表 =========
+class AssessmentQuestion(Base):
+    """评估题目表"""
+    __tablename__ = "assessment_questions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    dimension = Column(String(50), nullable=False)  # 所属维度：logic, innovation, communication, learning, pressure, leadership
+    question_text = Column(String(500), nullable=False)  # 题目内容
+    order_num = Column(Integer, default=0)  # 排序
+
+class AssessmentRecord(Base):
+    __tablename__ = "assessment_records"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.user_id"))  # 改为 user_id
+    scores = Column(JSON)
+    answers = Column(JSON)
+    overall_level = Column(String(20))
+    suggestions = Column(Text)
+    created_at = Column(DateTime, default=datetime.datetime.now)
+    
+    # 关联用户
+    user = relationship("User", back_populates="assessment_records")
 
 # ========= 发展路径推荐表 =========
 class CareerPath(Base):
