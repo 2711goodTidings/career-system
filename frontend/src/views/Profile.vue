@@ -1,5 +1,10 @@
 <template>
-  <div class="profile-page" :style="{ backgroundImage: `url(${profileBackground})` }">
+  <div
+    class="profile-page"
+    :style="{
+      backgroundImage: `linear-gradient(rgba(34, 74, 132, 0.18), rgba(34, 74, 132, 0.18)), url(${profileBackground})`
+    }"
+  >
     <FeaturePageNav current="profile" />
 
     <main class="book-stage">
@@ -427,7 +432,9 @@ onMounted(() => {
 
 .profile-page {
   min-height: 100vh;
-  overflow: hidden;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
   background-color: #8495A9;
   background-size: cover;
   background-position: center;
@@ -438,7 +445,8 @@ onMounted(() => {
 
 .book-stage {
   min-height: 100vh;
-  padding: 86px 54px 36px;
+  min-height: 100dvh;
+  padding: clamp(72px, 8vh, 86px) clamp(24px, 4vw, 54px) clamp(24px, 4vh, 36px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -449,7 +457,7 @@ onMounted(() => {
 .page-count {
   position: fixed;
   top: 26px;
-  right: 34px;
+  left: 34px;
   width: 78px;
   height: 78px;
   border-radius: 999px;
@@ -459,12 +467,15 @@ onMounted(() => {
   place-items: center;
   font-size: 28px;
   z-index: 20;
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 
 .profile-book {
+  --book-height: 740px;
+  --book-content-height: 635px;
   width: min(1240px, 100%);
-  min-height: 740px;
+  min-height: var(--book-height);
   display: grid;
   grid-template-columns: 1fr 1fr;
   position: relative;
@@ -489,7 +500,7 @@ onMounted(() => {
 }
 
 .book-page {
-  min-height: 740px;
+  min-height: var(--book-height);
   padding: 54px 40px 42px;
   position: relative;
   overflow: hidden;
@@ -528,7 +539,7 @@ onMounted(() => {
 
 .profile-cover {
   height: 100%;
-  min-height: 635px;
+  min-height: var(--book-content-height);
   position: relative;
   display: flex;
   align-items: center;
@@ -796,7 +807,7 @@ textarea::placeholder {
 
 .spread-panel {
   height: 100%;
-  min-height: 635px;
+  min-height: var(--book-content-height);
   display: grid;
   grid-template-rows: 1fr 1fr;
   gap: 40px;
@@ -827,20 +838,25 @@ textarea::placeholder {
 }
 
 .save-btn {
-  border: 1px solid rgba(241, 238, 231, 0.42);
-  background: rgba(147, 164, 193, 0.88);
-  color: #1f2529;
-  padding: 11px 20px;
+  border: 0;
+  background: transparent;
+  color: #f1eee7;
+  padding: 6px 2px 8px;
   font-size: 13px;
   cursor: pointer;
   letter-spacing: 1px;
   font-weight: 700;
-  transition: transform 0.2s ease, background 0.2s ease;
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+  transition: transform 0.2s ease, color 0.2s ease, text-decoration-color 0.2s ease;
 }
 
 .save-btn:hover {
   transform: translateY(-1px);
-  background: #f1eee7;
+  color: #ffffff;
+  text-decoration-color: rgba(255, 255, 255, 0.9);
 }
 
 .save-btn:disabled {
@@ -865,6 +881,41 @@ textarea::placeholder {
   font-size: 18px;
 }
 
+@media (min-width: 981px) and (max-height: 820px) {
+  .profile-book {
+    --book-height: 620px;
+    --book-content-height: 500px;
+  }
+
+  .book-page {
+    padding: 38px 34px 32px;
+  }
+
+  .profile-cover h1 {
+    left: -70px;
+    font-size: 72px;
+  }
+
+  .avatar-sheet {
+    width: min(340px, 78%);
+  }
+
+  .field-list {
+    gap: 20px 28px;
+    padding: 56px 42px 0 0;
+  }
+
+  .spread-panel {
+    gap: 28px;
+    padding: 42px 42px 24px;
+  }
+
+  .long-field textarea {
+    height: 160px;
+    min-height: 140px;
+  }
+}
+
 @media (max-width: 980px) {
   .profile-page {
     overflow: auto;
@@ -879,7 +930,7 @@ textarea::placeholder {
     width: 62px;
     height: 62px;
     font-size: 22px;
-    right: 18px;
+    left: 18px;
   }
 
   .profile-book {

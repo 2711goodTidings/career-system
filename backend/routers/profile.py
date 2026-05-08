@@ -19,8 +19,17 @@ UPLOAD_DIR = "uploads/avatars"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
+def get_user_or_404(user_id: int, db: Session) -> User:
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在，请先注册或登录")
+    return user
+
+
 @router.get("/{user_id}", response_model=UserProfileResponse)
 def get_profile(user_id: int, db: Session = Depends(get_db)):
+    get_user_or_404(user_id, db)
+
     profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
 
     if not profile:
@@ -31,9 +40,7 @@ def get_profile(user_id: int, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=UserProfileResponse)
 def create_profile(profile_data: UserProfileCreate, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.user_id == profile_data.user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="用户不存在，请先注册")
+    get_user_or_404(profile_data.user_id, db)
 
     existing_profile = db.query(UserProfile).filter(UserProfile.user_id == profile_data.user_id).first()
     if existing_profile:
@@ -41,21 +48,7 @@ def create_profile(profile_data: UserProfileCreate, db: Session = Depends(get_db
 
     new_profile = UserProfile(
         user_id=profile_data.user_id,
-        real_name=profile_data.real_name,
-        gender=profile_data.gender,
-        school=profile_data.school,
-        major=profile_data.major,
-        grade=profile_data.grade,
-        age=profile_data.age,
-        phone=profile_data.phone,
-        email=profile_data.email,
-        bio=profile_data.bio,
-
-        # ===== 新增字段 =====
-        interest=profile_data.interest,
-        skills=profile_data.skills,
-        target_preference=profile_data.target_preference,
-        career_goal=profile_data.career_goal
+        **profile_data.model_dump(exclude={"user_id"})
     )
 
     db.add(new_profile)
@@ -66,6 +59,8 @@ def create_profile(profile_data: UserProfileCreate, db: Session = Depends(get_db
 
 @router.put("/{user_id}", response_model=UserProfileResponse)
 def update_profile(user_id: int, profile_data: UserProfileUpdate, db: Session = Depends(get_db)):
+    get_user_or_404(user_id, db)
+
     profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
 
     if not profile:
@@ -82,9 +77,7 @@ def update_profile(user_id: int, profile_data: UserProfileUpdate, db: Session = 
 
 @router.post("/upload-avatar/{user_id}")
 def upload_avatar(user_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.user_id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="用户不存在")
+    get_user_or_404(user_id, db)
 
     profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
     if not profile:

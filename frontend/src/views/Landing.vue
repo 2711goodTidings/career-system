@@ -308,13 +308,7 @@ const strip2Width = computed(() => `${100 - 34 * stripProgress.value}%`)
 const strip3Width = computed(() => `${100 - 17 * stripProgress.value}%`)
 // 鐧诲綍鎴愬姛锛氳В閿佸姛鑳藉尯 + 鑷姩灞曞紑 + 鑷姩婊氬姩
 const handleLoginSuccess = () => {
-  setTimeout(() => {
-    functionRef.value?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start'
-    })
-    cardsExpanded.value = false
-  }, 500)
+  cardsExpanded.value = false
 }
 
 // 鈥斺€斺€斺€斺€斺€斺€斺€斺€斺€?鍒锋柊鑷姩鍏抽棴鍗＄墖 鈥斺€斺€斺€斺€斺€斺€斺€斺€斺€?
@@ -450,6 +444,7 @@ onBeforeUnmount(() => {
 }
 
 .page {
+  --main-divider-left: clamp(0px, 49%, 763px);
   width: 100%;
   min-height: 100vh;
   background: #E7E8E4;
@@ -719,8 +714,8 @@ onBeforeUnmount(() => {
 .function-section::after {
   content: "";
   position: absolute;
-  left: 36%;
-  top: 76px;
+  left: var(--main-divider-left);
+  top: 0;
   bottom: 0;
   width: 1px;
   background: rgba(63, 79, 92, 0.72);

@@ -46,7 +46,7 @@ class UserProfileBase(BaseModel):
 
 class UserProfileCreate(UserProfileBase):
     """创建个人资料"""
-    pass
+    user_id: int
 
 class UserProfileUpdate(UserProfileBase):
     """更新个人资料"""

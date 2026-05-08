@@ -1,5 +1,10 @@
 <template>
-  <div class="career-page" :style="{ backgroundImage: `url(${careerBackground})` }">
+  <div
+    class="career-page"
+    :style="{
+      backgroundImage: `linear-gradient(rgba(34, 74, 132, 0.16), rgba(34, 74, 132, 0.16)), url(${careerBackground})`
+    }"
+  >
     <FeaturePageNav current="career" />
 
     <main class="career-shell">
