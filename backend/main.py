@@ -3,12 +3,21 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from database import engine
+from database import SessionLocal, engine
 from models import Base
 from routers import auth, profile, career_path, career, assessment, planning_ai
 app = FastAPI(title="Career Planner API")
 
 Base.metadata.create_all(bind=engine)
+
+
+@app.on_event("startup")
+def seed_default_data():
+    db = SessionLocal()
+    try:
+        career.upsert_default_careers(db)
+    finally:
+        db.close()
 
 app.add_middleware(
     CORSMiddleware,

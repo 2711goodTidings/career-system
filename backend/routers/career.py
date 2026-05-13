@@ -1437,11 +1437,32 @@ def upsert_career_path(
     return path_record
 
 
+def get_candidate_careers_for_path(db: Session, recommend_path: str, min_count: int = 3) -> List[Career]:
+    path_careers = (
+        db.query(Career)
+        .filter(Career.is_active == True, Career.recommend_path == recommend_path)
+        .all()
+    )
+    if len(path_careers) >= min_count:
+        return path_careers
+
+    selected_ids = {career.career_id for career in path_careers}
+    fallback_careers = (
+        db.query(Career)
+        .filter(Career.is_active == True, ~Career.career_id.in_(selected_ids))
+        .all()
+        if selected_ids
+        else db.query(Career).filter(Career.is_active == True).all()
+    )
+    return path_careers + fallback_careers
+
+
 # -----------------------------
 # 原有 CRUD
 # -----------------------------
 @router.get("/", response_model=List[CareerResponse])
 def get_all_careers(db: Session = Depends(get_db)):
+    upsert_default_careers(db)
     return db.query(Career).filter(Career.is_active == True).all()
 
 
@@ -1486,15 +1507,7 @@ def build_career_recommendation(
         db=db,
     )
 
-    path_careers = (
-        db.query(Career)
-        .filter(Career.is_active == True, Career.recommend_path == recommend_path)
-        .all()
-    )
-
-    candidate_careers = path_careers
-    if not candidate_careers:
-        candidate_careers = db.query(Career).filter(Career.is_active == True).all()
+    candidate_careers = get_candidate_careers_for_path(db, recommend_path)
 
     tech_record = get_latest_assessment_record_by_type(user_id, "tech", db)
     general_record = get_latest_assessment_record_by_type(user_id, "general", db)
@@ -1542,11 +1555,7 @@ def recommend_careers(user_id: int, db: Session = Depends(get_db)):
         db=db,
     )
 
-    careers = (
-        db.query(Career)
-        .filter(Career.recommend_path == recommend_path, Career.is_active == True)
-        .all()
-    )
+    careers = get_candidate_careers_for_path(db, recommend_path)
 
     if careers:
         scored_items = [
