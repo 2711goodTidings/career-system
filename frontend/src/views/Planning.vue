@@ -122,15 +122,73 @@
         <strong>暂无规划</strong>
         <p>完善个人信息后点击“生成规划”，系统会自动生成阶段路线、技能清单和行动建议。</p>
       </section>
+
+      <section class="sheet ai-chat">
+        <div class="section-head">
+          <span>AI</span>
+          <h2>AI 职业规划问答</h2>
+        </div>
+
+        <section v-if="!userStore.isLogin" class="notice ai-notice">
+          <strong>请先登录</strong>
+          <p>登录后可以结合你的资料、测评结果和推荐路径咨询计算机专业职业规划问题。</p>
+        </section>
+
+        <template v-else>
+          <div class="quick-questions">
+            <button
+              v-for="item in quickQuestions"
+              :key="item"
+              class="text-btn quick-btn"
+              type="button"
+              @click="sendQuestion(item)"
+              :disabled="aiLoading"
+            >
+              {{ item }}
+            </button>
+          </div>
+
+          <div class="chat-list">
+            <div v-if="!chatMessages.length" class="empty-text">
+              可以直接提问就业、考研、项目、算法、简历或具体技术方向。
+            </div>
+            <article
+              v-for="message in chatMessages"
+              :key="message.id"
+              class="chat-message"
+              :class="message.role"
+            >
+              <span>{{ message.role === 'user' ? '我' : 'AI' }}</span>
+              <p>{{ message.content }}</p>
+              <small v-if="message.meta">{{ message.meta }}</small>
+            </article>
+          </div>
+
+          <p v-if="aiError" class="ai-error">{{ aiError }}</p>
+
+          <div class="chat-input">
+            <textarea
+              v-model="aiQuestion"
+              rows="4"
+              placeholder="请输入你的问题，例如：我适合就业还是考研？"
+              :disabled="aiLoading"
+            ></textarea>
+            <button class="solid-btn" type="button" @click="sendQuestion()" :disabled="aiLoading">
+              {{ aiLoading ? '发送中...' : '发送' }}
+            </button>
+          </div>
+        </template>
+      </section>
     </main>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import FeaturePageNav from '../components/FeaturePageNav.vue'
 import { getCareerRecommendation } from '../api/career'
+import { askPlanningAI } from '../api/planning'
 import { useUserStore } from '../stores/user'
 
 const router = useRouter()
@@ -139,6 +197,17 @@ const userStore = useUserStore()
 const loading = ref(false)
 const error = ref('')
 const recommendation = ref(null)
+const aiLoading = ref(false)
+const aiQuestion = ref('')
+const aiError = ref('')
+const chatMessages = ref([])
+
+const quickQuestions = [
+  '我适合就业还是考研？',
+  '我想做后端，接下来三个月怎么准备？',
+  '我的项目经历应该怎么补？',
+  '算法薄弱还能找开发岗吗？'
+]
 
 const pathResult = computed(() => recommendation.value?.path_result || {})
 const careerList = computed(() => recommendation.value?.career_list || [])
@@ -237,11 +306,89 @@ function goCareer() {
   router.push('/career')
 }
 
+function getChatStorageKey() {
+  return `planning_ai_chat_${userStore.userId}`
+}
+
+function loadChatMessages() {
+  if (!userStore.userId) {
+    chatMessages.value = []
+    return
+  }
+
+  try {
+    const saved = localStorage.getItem(getChatStorageKey())
+    chatMessages.value = saved ? JSON.parse(saved) : []
+  } catch (err) {
+    chatMessages.value = []
+  }
+}
+
+function saveChatMessages() {
+  if (!userStore.userId) return
+  localStorage.setItem(getChatStorageKey(), JSON.stringify(chatMessages.value.slice(-30)))
+}
+
+function appendChatMessage(role, content, meta = '') {
+  chatMessages.value.push({
+    id: `${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    role,
+    content,
+    meta
+  })
+  saveChatMessages()
+}
+
+async function sendQuestion(presetQuestion = '') {
+  if (!userStore.isLogin || !userStore.userId) {
+    aiError.value = '请先登录后再使用 AI 职业规划问答。'
+    return
+  }
+
+  const question = (presetQuestion || aiQuestion.value).trim()
+  if (!question) {
+    aiError.value = '请输入要咨询的问题。'
+    return
+  }
+
+  aiLoading.value = true
+  aiError.value = ''
+  appendChatMessage('user', question)
+  aiQuestion.value = ''
+
+  try {
+    const response = await askPlanningAI(userStore.userId, question)
+    const data = response.data || response
+    if (data.success) {
+      const meta = [data.provider, data.model].filter(Boolean).join(' / ')
+      appendChatMessage('assistant', data.answer || 'AI 暂未返回内容。', meta)
+    } else {
+      const message = data.error || 'AI 服务暂时不可用，请稍后重试。'
+      aiError.value = message
+      appendChatMessage('assistant', message)
+    }
+  } catch (err) {
+    const message = err.response?.data?.detail || err.message || 'AI 问答请求失败，请稍后重试。'
+    aiError.value = message
+    appendChatMessage('assistant', message)
+  } finally {
+    aiLoading.value = false
+  }
+}
+
 onMounted(() => {
   if (userStore.isLogin && userStore.userId) {
     loadRecommendation()
+    loadChatMessages()
   }
 })
+
+watch(
+  () => userStore.userId,
+  () => {
+    loadChatMessages()
+  }
+)
 </script>
 
 <style scoped>
@@ -561,6 +708,105 @@ button {
   line-height: 1;
 }
 
+.ai-chat {
+  margin-top: 24px;
+}
+
+.ai-notice {
+  margin-bottom: 0;
+  box-shadow: none;
+}
+
+.quick-questions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.quick-btn {
+  padding: 9px 0;
+}
+
+.chat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 180px;
+  max-height: 520px;
+  overflow-y: auto;
+  padding: 18px 0;
+  border-top: 1px solid rgba(31, 93, 149, 0.18);
+  border-bottom: 1px solid rgba(31, 93, 149, 0.18);
+}
+
+.chat-message {
+  max-width: 86%;
+  padding: 14px 16px;
+  background: #ffffff;
+  border-left: 4px solid #7fa3c4;
+}
+
+.chat-message.user {
+  align-self: flex-end;
+  border-left-color: transparent;
+  border-right: 4px solid #1f5d95;
+}
+
+.chat-message span {
+  display: block;
+  margin-bottom: 8px;
+  color: #5d84a8;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+}
+
+.chat-message p {
+  margin: 0;
+  color: #3d5a7a;
+  font-size: 15px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.chat-message small {
+  display: block;
+  margin-top: 8px;
+  color: #7fa3c4;
+}
+
+.ai-error {
+  margin: 14px 0 0;
+  color: #a54a4a;
+  line-height: 1.7;
+}
+
+.chat-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px;
+  gap: 14px;
+  align-items: end;
+  margin-top: 18px;
+}
+
+.chat-input textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 112px;
+  border: 1px solid rgba(31, 93, 149, 0.28);
+  background: #ffffff;
+  color: #1f5d95;
+  padding: 14px;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.6;
+  outline: none;
+}
+
+.chat-input textarea:focus {
+  border-color: #1f5d95;
+}
+
 @media (max-width: 1024px) {
   .cover-main,
   .overview,
@@ -615,6 +861,14 @@ button {
   .solid-btn {
     width: 100%;
     text-align: center;
+  }
+
+  .chat-message {
+    max-width: 100%;
+  }
+
+  .chat-input {
+    grid-template-columns: 1fr;
   }
 
   .section-head h2 {

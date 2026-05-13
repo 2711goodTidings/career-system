@@ -8,8 +8,6 @@
     <FeaturePageNav current="profile" />
 
     <main class="book-stage">
-      <div class="page-count">{{ currentSpread + 1 }}/2</div>
-
       <form class="profile-book" @submit.prevent="handleSubmit">
         <section
           class="book-page left-page"
@@ -59,7 +57,7 @@
                 <textarea
                   v-model="form.interest"
                   rows="8"
-                  placeholder="例如：人工智能、前端开发、数据分析、考研深造"
+                  placeholder="例如：后端开发、前端开发、人工智能、数据分析、网络安全、嵌入式、考研深造"
                 ></textarea>
               </div>
             </div>
@@ -156,7 +154,7 @@
                 <textarea
                   v-model="form.skills"
                   rows="8"
-                  placeholder="例如：Python、Java、Vue、MySQL、沟通表达"
+                  placeholder="例如：Python、Java、C++、Vue、MySQL、Linux、数据结构、机器学习、Git"
                 ></textarea>
               </div>
               <div class="long-field">
@@ -164,7 +162,7 @@
                 <textarea
                   v-model="form.career_goal"
                   rows="8"
-                  placeholder="例如：希望进入互联网公司，从事 AI 研发或数据分析相关工作"
+                  placeholder="例如：希望成为后端开发工程师，先完成 Spring Boot + MySQL 项目并准备暑期实习"
                 ></textarea>
               </div>
             </div>
@@ -433,7 +431,7 @@ onMounted(() => {
 .profile-page {
   min-height: 100vh;
   min-height: 100dvh;
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: auto;
   background-color: #8495A9;
   background-size: cover;
@@ -443,10 +441,17 @@ onMounted(() => {
   font-family: "Times New Roman", "Georgia", "PingFang SC", "Microsoft YaHei", serif;
 }
 
+.profile-page *,
+.profile-page *::before,
+.profile-page *::after {
+  box-sizing: border-box;
+}
+
 .book-stage {
   min-height: 100vh;
   min-height: 100dvh;
-  padding: clamp(72px, 8vh, 86px) clamp(24px, 4vw, 54px) clamp(24px, 4vh, 36px);
+  min-width: 1348px;
+  padding: 86px 54px 36px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -454,28 +459,13 @@ onMounted(() => {
   position: relative;
 }
 
-.page-count {
-  position: fixed;
-  top: 26px;
-  left: 34px;
-  width: 78px;
-  height: 78px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #f2f0ea;
-  display: grid;
-  place-items: center;
-  font-size: 28px;
-  z-index: 20;
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-}
-
 .profile-book {
   --book-height: 740px;
   --book-content-height: 635px;
-  width: min(1240px, 100%);
+  width: 1240px;
+  height: var(--book-height);
   min-height: var(--book-height);
+  flex: 0 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
   position: relative;
@@ -500,6 +490,7 @@ onMounted(() => {
 }
 
 .book-page {
+  height: var(--book-height);
   min-height: var(--book-height);
   padding: 54px 40px 42px;
   position: relative;
@@ -563,8 +554,8 @@ onMounted(() => {
 }
 
 .avatar-sheet {
-  width: min(410px, 84%);
-  aspect-ratio: 0.82;
+  width: 410px;
+  height: 500px;
   background: #7ea0c7;
   transform: translateX(58px);
   position: relative;
@@ -827,8 +818,9 @@ textarea::placeholder {
 }
 
 .book-actions {
-  width: min(1240px, 100%);
+  width: 1240px;
   margin-top: 18px;
+  flex: 0 0 auto;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -879,147 +871,5 @@ textarea::placeholder {
 .completion-box strong {
   color: #f1eee7;
   font-size: 18px;
-}
-
-@media (min-width: 981px) and (max-height: 820px) {
-  .profile-book {
-    --book-height: 620px;
-    --book-content-height: 500px;
-  }
-
-  .book-page {
-    padding: 38px 34px 32px;
-  }
-
-  .profile-cover h1 {
-    left: -70px;
-    font-size: 72px;
-  }
-
-  .avatar-sheet {
-    width: min(340px, 78%);
-  }
-
-  .field-list {
-    gap: 20px 28px;
-    padding: 56px 42px 0 0;
-  }
-
-  .spread-panel {
-    gap: 28px;
-    padding: 42px 42px 24px;
-  }
-
-  .long-field textarea {
-    height: 160px;
-    min-height: 140px;
-  }
-}
-
-@media (max-width: 980px) {
-  .profile-page {
-    overflow: auto;
-  }
-
-  .book-stage {
-    padding: 86px 18px 30px;
-    justify-content: flex-start;
-  }
-
-  .page-count {
-    width: 62px;
-    height: 62px;
-    font-size: 22px;
-    left: 18px;
-  }
-
-  .profile-book {
-    min-height: auto;
-    grid-template-columns: 1fr;
-  }
-
-  .profile-book::before {
-    display: none;
-  }
-
-  .book-page {
-    min-height: auto;
-    padding: 34px 26px;
-  }
-
-  .left-page,
-  .right-page {
-    border-radius: 2px;
-  }
-
-  .profile-cover,
-  .spread-panel {
-    min-height: auto;
-  }
-
-  .profile-cover {
-    min-height: 470px;
-  }
-
-  .profile-cover h1 {
-    left: -72px;
-    font-size: 62px;
-  }
-
-  .avatar-sheet {
-    transform: translateX(34px);
-  }
-
-  .page-title {
-    margin: 40px 34px 28px 0;
-  }
-
-  .field-list {
-    grid-template-columns: 1fr;
-    padding-right: 34px;
-  }
-
-  .spread-panel {
-    padding: 42px 36px 24px;
-  }
-}
-
-@media (max-width: 560px) {
-  .book-stage {
-    padding-inline: 12px;
-  }
-
-  .book-page {
-    padding: 28px 20px;
-  }
-
-  .profile-cover h1 {
-    left: -58px;
-    font-size: 48px;
-  }
-
-  .avatar-sheet {
-    width: 72%;
-    transform: translateX(34px);
-  }
-
-  .page-title {
-    grid-template-columns: 1fr;
-    gap: 8px;
-    margin-right: 28px;
-  }
-
-  .spread-panel {
-    padding: 38px 30px 20px;
-  }
-
-  .book-actions {
-    justify-content: stretch;
-  }
-
-  .save-btn,
-  .completion-box {
-    flex: 1 1 100%;
-  }
 }
 </style>

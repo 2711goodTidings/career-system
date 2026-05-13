@@ -12,13 +12,23 @@ async function request(url, options = {}) {
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok) {
-    throw new Error(data.detail || '请求失败')
+    const message = response.status === 405
+      ? '后端还未重启到新版接口，请重启 FastAPI 后端后再重新生成。'
+      : data.detail || '请求失败'
+    throw new Error(message)
   }
 
   return data
 }
 
-export function getCareerRecommendation(userId) {
+export function getCareerRecommendation(userId, planningInput = null) {
+  if (planningInput) {
+    return request(`/career/recommendation/${userId}`, {
+      method: 'POST',
+      body: JSON.stringify(planningInput)
+    })
+  }
+
   return request(`/career/recommendation/${userId}`)
 }
 

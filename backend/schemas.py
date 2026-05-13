@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -151,6 +151,39 @@ class AbilitySnapshot(BaseModel):
     learning: float
     pressure: float
     leadership: float
+    tech_scores: Dict[str, float] = Field(default_factory=dict)
+    general_scores: Dict[str, float] = Field(default_factory=dict)
+
+
+class RecommendationDataSource(BaseModel):
+    has_profile: bool = True
+    has_assessment: bool = False
+    has_general_assessment: bool = False
+    assessment_level: Optional[str] = None
+    assessment_created_at: Optional[datetime] = None
+    general_assessment_level: Optional[str] = None
+    general_assessment_created_at: Optional[datetime] = None
+    profile_fields_used: List[str] = Field(default_factory=list)
+    planning_fields_used: List[str] = Field(default_factory=list)
+    message: str = ""
+
+
+class CareerPlanningInput(BaseModel):
+    school_level: Optional[str] = None
+    gpa_score: Optional[float] = None
+    rank_level: Optional[str] = None
+    cet4_score: Optional[int] = 0
+    cet6_score: Optional[int] = 0
+    language_test: Optional[str] = None
+    expected_city: Optional[str] = None
+    economic_constraint: Optional[str] = None
+    project_count: Optional[int] = 0
+    project_complexity: Optional[str] = None
+    has_deployment: Optional[str] = None
+    internship_status: Optional[str] = None
+    value_preference: Optional[str] = None
+    tech_interests: Optional[str] = None
+    extra_notes: Optional[str] = None
 
 
 class CareerRecommendationItem(BaseModel):
@@ -172,6 +205,7 @@ class CareerRecommendationItem(BaseModel):
     match_score: float
     reasons: List[str] = Field(default_factory=list)
     gap_skills: List[str] = Field(default_factory=list)
+    score_detail: Dict[str, float] = Field(default_factory=dict)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -179,9 +213,24 @@ class CareerRecommendationItem(BaseModel):
 class CareerRecommendationResponse(BaseModel):
     user_id: int
     ability_snapshot: AbilitySnapshot
+    data_source: RecommendationDataSource = Field(default_factory=RecommendationDataSource)
     path_result: CareerPathResponse
     career_list: List[CareerRecommendationItem]
     advice_list: List[str] = Field(default_factory=list)
+    computer_planning: Dict[str, Any] = Field(default_factory=dict)
+
+# ========= AI 职业规划问答 =========
+class PlanningChatRequest(BaseModel):
+    user_id: int
+    question: str
+
+
+class PlanningChatResponse(BaseModel):
+    answer: str = ""
+    provider: str = ""
+    model: str = ""
+    success: bool
+    error: Optional[str] = None
 
 # ========= 通用响应 =========
 class MessageResponse(BaseModel):

@@ -8,8 +8,25 @@
       <section class="paper-panel">
         <header class="paper-heading">
           <span>Ability Questionnaire</span>
-          <h1>能力评估问卷</h1>
+          <h1>{{ activeConfig.title }}</h1>
         </header>
+
+        <div class="assessment-tabs">
+          <button
+            v-for="item in assessmentTypes"
+            :key="item.key"
+            type="button"
+            class="tab-btn"
+            :class="{ active: assessmentType === item.key }"
+            @click="switchAssessmentType(item.key)"
+          >
+            <span>{{ item.icon }}</span>{{ item.label }}
+          </button>
+        </div>
+
+        <div class="assessment-intro">
+          <p>{{ activeConfig.intro }}</p>
+        </div>
 
         <div class="paper-status">
           <span>{{ answeredCount }}/{{ questions.length || 0 }}</span>
@@ -80,7 +97,7 @@
 
           <section v-if="submitted && result" class="result-view">
             <div class="result-heading">
-              <span>Ability Radar</span>
+              <span>{{ activeConfig.resultTitle }}</span>
               <strong :class="result.overall_level">{{ result.overall_level }}</strong>
             </div>
 
@@ -124,7 +141,7 @@
                     text-anchor="middle"
                     dominant-baseline="middle"
                   >
-                    {{ axis.label }}
+                    {{ axis.shortLabel }}
                   </text>
                 </g>
               </svg>
@@ -138,7 +155,13 @@
             </div>
 
             <div class="result-suggestion">
-              <span>个性化建议</span>
+              <div class="suggestion-title">
+                <span>个性化建议</span>
+                <em>{{ suggestionSourceText }}</em>
+              </div>
+              <small v-if="result.suggestion_error" class="suggestion-error">
+                AI 未生成：{{ result.suggestion_error }}
+              </small>
               <p>{{ result.suggestions }}</p>
             </div>
 
@@ -159,7 +182,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { getQuestions, submitAssessment } from '../api/assessment'
 import FeaturePageNav from '../components/FeaturePageNav.vue'
 import { useUserStore } from '../stores/user'
@@ -172,6 +195,30 @@ const submitting = ref(false)
 const submitted = ref(false)
 const result = ref(null)
 const autoSaveMsg = ref('')
+const assessmentType = ref('tech')
+
+const assessmentTypes = [
+  {
+    key: 'general',
+    icon: 'GEN',
+    label: '综合能力评估',
+    title: '综合能力评估',
+    resultTitle: '综合能力雷达图',
+    intro: '这部分评估逻辑思维、创新、沟通协作、学习、抗压和领导力，用于 Career 页面判断学习节奏、表达协作和长期执行状态。'
+  },
+  {
+    key: 'tech',
+    icon: 'CS',
+    label: '计算机能力评估',
+    title: '计算机能力评估',
+    resultTitle: '计算机能力雷达图',
+    intro: '这部分评估编程、算法、计算机基础、软件工程、前后端、数据库、网络、AI 和运维能力，是 Career 页面职业推荐和能力画像的主要依据。'
+  }
+]
+
+const activeConfig = computed(() =>
+  assessmentTypes.find(item => item.key === assessmentType.value) || assessmentTypes[1]
+)
 
 const scoreLabels = {
   1: '非常不符合',
@@ -187,10 +234,40 @@ const dimensionNames = {
   communication: '沟通协作',
   learning: '学习能力',
   pressure: '抗压能力',
-  leadership: '领导力'
+  leadership: '领导力',
+  programming: '编程能力',
+  algorithm: '数据结构与算法',
+  computer_basic: '计算机基础',
+  software_eng: '软件工程',
+  backend: '后端开发',
+  frontend: '前端开发',
+  database: '数据库',
+  network: '计算机网络',
+  ai_ml: 'AI与机器学习',
+  devops: '运维与部署'
+}
+
+const dimensionShortNames = {
+  logic: '逻辑',
+  innovation: '创新',
+  communication: '沟通',
+  learning: '学习',
+  pressure: '抗压',
+  leadership: '领导',
+  programming: '编程',
+  algorithm: '算法',
+  computer_basic: '基础',
+  software_eng: '工程',
+  backend: '后端',
+  frontend: '前端',
+  database: '数据库',
+  network: '网络',
+  ai_ml: 'AI',
+  devops: '运维'
 }
 
 const getDimensionName = (dim) => dimensionNames[dim] || dim
+const getDimensionShortName = (dim) => dimensionShortNames[dim] || getDimensionName(dim)
 
 const isAnsweredValue = (value) => value !== undefined && value !== null && value !== ''
 
@@ -217,9 +294,15 @@ const resultScoreList = computed(() =>
   Object.entries(result.value?.scores || {}).map(([dim, score]) => ({
     dim,
     label: getDimensionName(dim),
+    shortLabel: getDimensionShortName(dim),
     score: clampScore(score)
   }))
 )
+
+const suggestionSourceText = computed(() => {
+  if (!result.value) return ''
+  return result.value.suggestion_source === 'ai' ? 'AI 生成' : '规则建议'
+})
 
 const radarLevels = [0.25, 0.5, 0.75, 1]
 const radarCenter = 180
@@ -295,7 +378,7 @@ const getCurrentUserId = () => {
 
 const saveAnswersToLocal = () => {
   const userId = getUserId()
-  const key = `assessment_answers_${userId}`
+  const key = `assessment_${assessmentType.value}_answers_${userId}`
   const toSave = {}
 
   questions.value.forEach(q => {
@@ -317,7 +400,7 @@ const saveAnswersToLocal = () => {
 
 const loadSavedAnswers = () => {
   const userId = getUserId()
-  const key = `assessment_answers_${userId}`
+  const key = `assessment_${assessmentType.value}_answers_${userId}`
   const saved = localStorage.getItem(key)
 
   if (saved) {
@@ -343,7 +426,7 @@ const loadSavedAnswers = () => {
 const clearSavedAnswers = () => {
   if (confirm('确定要清除所有已保存的答案吗？此操作不可恢复。')) {
     const userId = getUserId()
-    const key = `assessment_answers_${userId}`
+    const key = `assessment_${assessmentType.value}_answers_${userId}`
     localStorage.removeItem(key)
 
     questions.value.forEach(q => {
@@ -360,7 +443,7 @@ const clearSavedAnswers = () => {
 const loadQuestions = async () => {
   loading.value = true
   try {
-    const res = await getQuestions()
+    const res = await getQuestions(assessmentType.value)
     questions.value = res.data
     questions.value.forEach(q => {
       if (answers.value[q.id] === undefined) {
@@ -384,7 +467,7 @@ const handleSubmit = async () => {
 
   submitting.value = true
   try {
-    const res = await submitAssessment(answers.value, getCurrentUserId())
+    const res = await submitAssessment(answers.value, getCurrentUserId(), assessmentType.value)
     result.value = res.data
     submitted.value = true
 
@@ -410,6 +493,21 @@ const resetAssessment = () => {
   submitted.value = false
   result.value = null
 }
+
+const switchAssessmentType = async (type) => {
+  if (type === assessmentType.value) return
+  saveAnswersToLocal()
+  assessmentType.value = type
+  answers.value = {}
+  submitted.value = false
+  result.value = null
+  await loadQuestions()
+}
+
+watch(assessmentType, () => {
+  submitted.value = false
+  result.value = null
+})
 
 onMounted(() => {
   loadQuestions()
@@ -515,6 +613,55 @@ onMounted(() => {
   color: #7c746d;
   font-size: 13px;
   letter-spacing: 0.08em;
+}
+
+.assessment-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 18px 0 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(89, 82, 75, 0.16);
+}
+
+.tab-btn {
+  min-height: 38px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(31, 93, 149, 0.42);
+  background: rgba(255, 255, 255, 0.22);
+  color: #1f5d95;
+  cursor: pointer;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+}
+
+.tab-btn span {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.tab-btn.active {
+  background: #1f5d95;
+  color: #f4f7fa;
+  border-color: #1f5d95;
+}
+
+.assessment-intro {
+  margin: 12px 0 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(31, 93, 149, 0.22);
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.assessment-intro p {
+  margin: 0;
+  color: #625b54;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
 }
 
 .auto-save-tip {
@@ -742,6 +889,33 @@ button {
   color: #14110f;
   font-size: 30px;
   line-height: 1;
+}
+
+.suggestion-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.suggestion-title em {
+  padding: 5px 10px;
+  color: #1f5d95;
+  border: 1px solid rgba(31, 93, 149, 0.26);
+  background: rgba(31, 93, 149, 0.08);
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.suggestion-error {
+  display: block;
+  margin-top: 10px;
+  color: #a25a18;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .result-heading strong {

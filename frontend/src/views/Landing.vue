@@ -1,13 +1,6 @@
 ﻿<template>
   <div class="page">
     <!-- HERO -->
-    <div class="brand-bar">
-      <img :src="diceLogo" class="brand-logo" />
-      <div class="brand-text">
-        SMART CAREER PLANNING
-      </div>
-    </div>
-
     <section class="section hero-section" ref="heroRef">
       <div class="hero-glow hero-glow-1"></div>
 
@@ -145,7 +138,6 @@
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
-import diceLogo from '../assets/dice-logo.png'
 import LoginSection from '../components/LoginSection.vue'
 
 const userStore = useUserStore()
@@ -407,40 +399,6 @@ onBeforeUnmount(() => {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
-
-.brand-bar {
-  position: fixed;
-  top: 28px;
-  left: 34px;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 10px 16px;
-  background: #93A4C1;
-  backdrop-filter: blur(8px);
-  border-radius: 0;
-  height: 60px;
-  width: 310px;
-  box-shadow:
-    0 6px 20px rgba(0,0,0,0.15),
-    inset 0 1px 0 rgba(255,255,255,0.08);
-}
-
-.brand-logo {
-  width: 60px;
-  height: 60px;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.2));
-}
-
-.brand-text {
-  color: rgba(255,255,255,0.92);
-  font-size: 12px;
-  letter-spacing: 2.2px;
-  font-weight: 500;
-  white-space: nowrap;
 }
 
 .page {
@@ -1044,12 +1002,6 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 768px) {
-  .brand-bar {
-    left: 16px;
-    top: 16px;
-    width: 252px;
-  }
-
   .title-line {
     letter-spacing: -2px;
   }
