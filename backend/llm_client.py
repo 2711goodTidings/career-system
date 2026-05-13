@@ -86,7 +86,7 @@ def get_llm_config() -> LLMConfig:
     base_url = _read_env("LLM_BASE_URL", "MIMO_API_URL", "MIMO_BASE_URL")
     model = _read_env("LLM_MODEL", "MIMO_MODEL")
     if not base_url and provider.lower() == "mimo":
-        base_url = "https://api.xiaomimimo.com/v1"
+        base_url = "https://token-plan-cn.xiaomimimo.com/v1" if api_key.startswith("tp-") else "https://api.xiaomimimo.com/v1"
     chat_path = _read_env("LLM_CHAT_PATH", "MIMO_CHAT_PATH", default="/chat/completions") or "/chat/completions"
     api_key_header = _read_env("LLM_API_KEY_HEADER", "MIMO_API_KEY_HEADER")
     if not api_key_header:
