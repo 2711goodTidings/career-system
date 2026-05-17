@@ -225,12 +225,19 @@ class PlanningChatRequest(BaseModel):
     question: str
 
 
+class PlanningYearlyPlanRequest(BaseModel):
+    user_id: int
+    selected_path: Optional[str] = None
+
+
 class PlanningChatResponse(BaseModel):
     answer: str = ""
     provider: str = ""
     model: str = ""
     success: bool
     error: Optional[str] = None
+    from_cache: bool = False
+    created_at: Optional[datetime] = None
 
 # ========= 通用响应 =========
 class MessageResponse(BaseModel):

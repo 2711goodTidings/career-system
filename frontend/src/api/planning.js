@@ -6,3 +6,12 @@ export const askPlanningAI = (userId, question) => {
     question
   })
 }
+
+export const generateYearlyPlanning = (userId, selectedPath) => {
+  return request.post('/api/planning/yearly-plan', {
+    user_id: userId,
+    selected_path: selectedPath
+  }, {
+    timeout: 180000
+  })
+}

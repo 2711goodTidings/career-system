@@ -162,7 +162,7 @@
               <small v-if="result.suggestion_error" class="suggestion-error">
                 AI 未生成：{{ result.suggestion_error }}
               </small>
-              <p>{{ result.suggestions }}</p>
+              <p>{{ plainSuggestion }}</p>
             </div>
 
             <div class="paper-actions">
@@ -298,6 +298,16 @@ const resultScoreList = computed(() =>
     score: clampScore(score)
   }))
 )
+
+const toPlainText = (text) => String(text || '')
+  .replace(/\*\*/g, '')
+  .replace(/^#{1,6}\s*/gm, '')
+  .replace(/^\s*[-*]\s+/gm, '')
+  .replace(/`{1,3}/g, '')
+  .replace(/\n{3,}/g, '\n\n')
+  .trim()
+
+const plainSuggestion = computed(() => toPlainText(result.value?.suggestions))
 
 const suggestionSourceText = computed(() => {
   if (!result.value) return ''
@@ -524,20 +534,20 @@ onMounted(() => {
   padding: 0 24px 54px;
   position: relative;
   overflow-x: hidden;
-  background-color: #123f91;
+  background-color: #263d4f;
   background-image:
-    linear-gradient(rgba(18, 63, 145, 0.18), rgba(18, 63, 145, 0.18)),
+    linear-gradient(rgba(38, 61, 79, 0.1), rgba(38, 61, 79, 0.1)),
     url("../assets/assessmentbackgroud.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
-  color: #5d5751;
+  color: #30485a;
   font-family: "Times New Roman", "Songti SC", "STSong", "SimSun", serif;
 }
 
 .questionnaire-shell {
-  width: min(720px, calc(100vw - 48px));
+  width: min(980px, calc(100vw - 48px));
   margin: 50vh auto 0;
   position: relative;
   z-index: 1;
@@ -548,7 +558,7 @@ onMounted(() => {
   left: -150px;
   top: -88px;
   z-index: 3;
-  color: #1f5d95;
+  color: #263d4f;
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(82px, 13vw, 168px);
   font-weight: 400;
@@ -559,10 +569,11 @@ onMounted(() => {
 
 .paper-panel {
   min-height: 760px;
-  padding: 44px 38px 24px;
+  padding: 48px 48px 28px;
   position: relative;
-  background: #edf0f2;
-  box-shadow: 0 28px 72px rgba(16, 32, 68, 0.24);
+  background: rgba(232, 239, 243, 0.94);
+  border: 1px solid #8fa0ad;
+  box-shadow: 8px 8px 0 rgba(38, 61, 79, 0.32);
 }
 
 .paper-heading {
@@ -577,13 +588,12 @@ onMounted(() => {
   bottom: 10px;
   width: 8px;
   height: 8px;
-  border: 2px solid #1f5d95;
-  border-radius: 50%;
+  border: 2px solid #263d4f;
 }
 
 .paper-heading span {
   display: block;
-  color: #14110f;
+  color: #263d4f;
   font-size: clamp(27px, 4vw, 43px);
   line-height: 1;
   letter-spacing: 0.02em;
@@ -591,7 +601,7 @@ onMounted(() => {
 
 .paper-heading h1 {
   margin: 4px 0 0;
-  color: #504c48;
+  color: #30485a;
   font-family: "Microsoft JhengHei Light", "Microsoft YaHei UI Light", "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: clamp(42px, 7vw, 74px);
   font-weight: 300;
@@ -608,9 +618,9 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 18px;
-  border-top: 1px solid rgba(89, 82, 75, 0.28);
-  border-bottom: 1px solid rgba(89, 82, 75, 0.2);
-  color: #7c746d;
+  border-top: 1px solid #8fa0ad;
+  border-bottom: 1px solid rgba(143, 160, 173, 0.68);
+  color: #496274;
   font-size: 13px;
   letter-spacing: 0.08em;
 }
@@ -621,7 +631,7 @@ onMounted(() => {
   flex-wrap: wrap;
   margin: 18px 0 14px;
   padding-bottom: 14px;
-  border-bottom: 1px solid rgba(89, 82, 75, 0.16);
+  border-bottom: 1px solid rgba(143, 160, 173, 0.62);
 }
 
 .tab-btn {
@@ -630,9 +640,9 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid rgba(31, 93, 149, 0.42);
-  background: rgba(255, 255, 255, 0.22);
-  color: #1f5d95;
+  border: 1px solid #8fa0ad;
+  background: rgba(255, 255, 255, 0.26);
+  color: #263d4f;
   cursor: pointer;
   font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 14px;
@@ -644,21 +654,21 @@ onMounted(() => {
 }
 
 .tab-btn.active {
-  background: #1f5d95;
+  background: #263d4f;
   color: #f4f7fa;
-  border-color: #1f5d95;
+  border-color: #263d4f;
 }
 
 .assessment-intro {
   margin: 12px 0 16px;
   padding: 12px 14px;
-  border: 1px solid rgba(31, 93, 149, 0.22);
-  background: rgba(255, 255, 255, 0.38);
+  border: 1px solid #8fa0ad;
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .assessment-intro p {
   margin: 0;
-  color: #625b54;
+  color: #30485a;
   font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 14px;
   line-height: 1.7;
@@ -670,11 +680,11 @@ onMounted(() => {
   bottom: 28px;
   z-index: 90;
   padding: 9px 14px;
-  background: rgba(232, 227, 218, 0.94);
-  color: #123f91;
-  border: 1px solid rgba(18, 63, 145, 0.22);
+  background: rgba(232, 239, 243, 0.94);
+  color: #263d4f;
+  border: 1px solid #8fa0ad;
   font-size: 14px;
-  box-shadow: 0 16px 30px rgba(16, 32, 68, 0.22);
+  box-shadow: 6px 6px 0 rgba(38, 61, 79, 0.24);
 }
 
 .paper-state {
@@ -683,15 +693,15 @@ onMounted(() => {
   place-items: center;
   gap: 18px;
   text-align: center;
-  color: #6f6860;
+  color: #496274;
   font-size: 18px;
 }
 
 .spinner {
   width: 38px;
   height: 38px;
-  border: 2px solid rgba(89, 82, 75, 0.2);
-  border-top-color: #1f5d95;
+  border: 2px solid rgba(143, 160, 173, 0.45);
+  border-top-color: #263d4f;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -708,10 +718,10 @@ onMounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 14px;
-  color: #79716a;
+  color: #496274;
   font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 12px;
-  border-bottom: 1px solid rgba(89, 82, 75, 0.18);
+  border-bottom: 1px solid rgba(143, 160, 173, 0.62);
 }
 
 .score-legend span {
@@ -726,9 +736,8 @@ onMounted(() => {
   height: 17px;
   display: inline-grid;
   place-items: center;
-  color: #1f5d95;
-  border: 1px solid #1f5d95;
-  border-radius: 50%;
+  color: #263d4f;
+  border: 1px solid #263d4f;
   font-size: 11px;
   font-weight: 500;
 }
@@ -739,16 +748,16 @@ onMounted(() => {
 
 .question-row {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) 158px;
-  gap: 8px 14px;
+  grid-template-columns: 40px minmax(0, 1fr) 190px;
+  gap: 10px 20px;
   align-items: start;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(89, 82, 75, 0.13);
+  padding: 12px 0;
+  border-bottom: 1px solid #c8d3db;
 }
 
 .question-index {
-  color: #69625b;
-  font-size: 17px;
+  color: #496274;
+  font-size: 18px;
   line-height: 1.5;
   text-align: right;
 }
@@ -761,7 +770,7 @@ onMounted(() => {
   margin-bottom: 1px;
   display: flex;
   gap: 10px;
-  color: #9a9188;
+  color: #6c7f8d;
   font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 10px;
   line-height: 1.2;
@@ -770,16 +779,16 @@ onMounted(() => {
 
 .question-copy p {
   margin: 0;
-  color: #5c554f;
-  font-size: 17px;
-  line-height: 1.48;
+  color: #263d4f;
+  font-size: 16px;
+  line-height: 1.58;
 }
 
 .circle-options {
   display: flex;
   justify-content: flex-end;
-  gap: 6px;
-  padding-top: 4px;
+  gap: 8px;
+  padding-top: 3px;
 }
 
 .circle-option {
@@ -793,13 +802,12 @@ onMounted(() => {
 }
 
 .circle-option span {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   display: grid;
   place-items: center;
-  border: 1.4px solid #79716a;
-  border-radius: 50%;
-  color: #79716a;
+  border: 1.4px solid #8fa0ad;
+  color: #496274;
   font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 12px;
   line-height: 1;
@@ -813,8 +821,8 @@ onMounted(() => {
 .circle-option:hover span,
 .circle-option.selected span {
   color: #f4f7fa;
-  background: #1f5d95;
-  border-color: #1f5d95;
+  background: #263d4f;
+  border-color: #263d4f;
 }
 
 .circle-option:hover span {
@@ -837,9 +845,9 @@ button {
 .text-btn {
   padding: 0 0 3px;
   border: 0;
-  border-bottom: 1px dashed rgba(89, 82, 75, 0.64);
+  border-bottom: 1px dashed #8fa0ad;
   background: transparent;
-  color: #625b54;
+  color: #30485a;
   cursor: pointer;
   font-size: 15px;
 }
@@ -847,8 +855,8 @@ button {
 .submit-btn {
   min-height: 38px;
   padding: 0 22px;
-  border: 1px solid #1f5d95;
-  background: #1f5d95;
+  border: 1px solid #263d4f;
+  background: #263d4f;
   color: #f4f7fa;
   cursor: pointer;
   font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -862,7 +870,7 @@ button {
 
 .submit-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: #174a78;
+  background: #30485a;
 }
 
 .submit-btn:disabled {
@@ -873,7 +881,7 @@ button {
 .result-view {
   margin-top: 30px;
   padding-top: 24px;
-  border-top: 1px solid rgba(89, 82, 75, 0.2);
+  border-top: 1px solid #8fa0ad;
 }
 
 .result-heading {
@@ -886,7 +894,7 @@ button {
 
 .result-heading span,
 .result-suggestion span {
-  color: #14110f;
+  color: #263d4f;
   font-size: 30px;
   line-height: 1;
 }
@@ -901,9 +909,9 @@ button {
 
 .suggestion-title em {
   padding: 5px 10px;
-  color: #1f5d95;
-  border: 1px solid rgba(31, 93, 149, 0.26);
-  background: rgba(31, 93, 149, 0.08);
+  color: #263d4f;
+  border: 1px solid #8fa0ad;
+  background: rgba(232, 239, 243, 0.72);
   font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 12px;
   font-style: normal;
@@ -919,7 +927,7 @@ button {
 }
 
 .result-heading strong {
-  color: #1f5d95;
+  color: #263d4f;
   font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: clamp(34px, 6vw, 62px);
   line-height: 1;
@@ -927,8 +935,8 @@ button {
 
 .radar-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 160px;
-  gap: 22px;
+  grid-template-columns: minmax(0, 1fr) 210px;
+  gap: 28px;
   align-items: center;
   margin: 12px 0 24px;
 }
@@ -941,33 +949,33 @@ button {
 
 .radar-grid polygon {
   fill: none;
-  stroke: rgba(89, 82, 75, 0.22);
+  stroke: rgba(143, 160, 173, 0.62);
   stroke-width: 1;
 }
 
 .radar-grid line {
-  stroke: rgba(89, 82, 75, 0.16);
+  stroke: rgba(143, 160, 173, 0.42);
   stroke-width: 1;
 }
 
 .radar-area {
-  fill: rgba(31, 93, 149, 0.18);
+  fill: rgba(38, 61, 79, 0.18);
 }
 
 .radar-line {
   fill: none;
-  stroke: #1f5d95;
+  stroke: #263d4f;
   stroke-width: 2;
 }
 
 .radar-dots circle {
-  fill: #1f5d95;
-  stroke: #edf0f2;
+  fill: #263d4f;
+  stroke: #e8eff3;
   stroke-width: 2;
 }
 
 .radar-labels text {
-  fill: #625b54;
+  fill: #30485a;
   font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 11px;
 }
@@ -984,14 +992,14 @@ button {
   grid-template-columns: 1fr 42px;
   gap: 10px;
   align-items: center;
-  color: #625b54;
+  color: #30485a;
   font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 13px;
-  border-bottom: 1px solid rgba(89, 82, 75, 0.12);
+  border-bottom: 1px solid rgba(143, 160, 173, 0.5);
 }
 
 .radar-score-item strong {
-  color: #1f5d95;
+  color: #263d4f;
   font-weight: 600;
   text-align: right;
 }
@@ -1006,19 +1014,19 @@ button {
   gap: 12px;
   align-items: center;
   min-height: 36px;
-  color: #625b54;
+  color: #30485a;
   font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 14px;
 }
 
 .score-track {
   height: 8px;
-  background: rgba(89, 82, 75, 0.16);
+  background: rgba(143, 160, 173, 0.42);
 }
 
 .score-fill {
   height: 100%;
-  background: #123f91;
+  background: #263d4f;
 }
 
 .score-row strong {
@@ -1028,12 +1036,12 @@ button {
 
 .result-suggestion {
   padding-top: 18px;
-  border-top: 1px solid rgba(89, 82, 75, 0.18);
+  border-top: 1px solid #8fa0ad;
 }
 
 .result-suggestion p {
   margin: 14px 0 0;
-  color: #625b54;
+  color: #30485a;
   font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 15px;
   line-height: 1.8;
@@ -1043,7 +1051,7 @@ button {
 .paper-footer {
   margin-top: 28px;
   text-align: center;
-  color: #26211d;
+  color: #263d4f;
   font-size: 18px;
   line-height: 1;
 }

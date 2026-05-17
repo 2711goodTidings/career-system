@@ -113,3 +113,17 @@ class Career(Base):
 
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+# ========= 规划书生成历史表 =========
+class PlanningYearlyPlanRecord(Base):
+    __tablename__ = "planning_yearly_plan_records"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False, index=True)
+    selected_path = Column(String(20), nullable=True, index=True)
+    input_hash = Column(String(64), nullable=False, index=True)
+    answer = Column(Text, nullable=False)
+    provider = Column(String(50), nullable=True)
+    model = Column(String(100), nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.now)

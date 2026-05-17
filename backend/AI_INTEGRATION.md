@@ -16,7 +16,7 @@ backend/llm_client.py
 
 ```env
 MIMO_API_KEY=你的tp开头key
-MIMO_API_URL=https://token-plan-cn.xiaomimimo.com/v1
+MIMO_API_URL=https://api.mimo-v2.com/v1
 MIMO_MODEL=mimo-v2.5-pro
 AI_TEMPERATURE=0.7
 AI_MAX_TOKENS=800
@@ -26,13 +26,16 @@ AI_MAX_TOKENS=800
 
 ```env
 MIMO_API_KEY=你的sk开头key
-MIMO_API_URL=https://api.xiaomimimo.com/v1
+MIMO_API_URL=https://api.mimo-v2.com/v1
 MIMO_MODEL=mimo-v2.5-pro
 AI_TEMPERATURE=0.7
 AI_MAX_TOKENS=800
 ```
 
-如果没有写 `MIMO_API_URL`，`llm_client.py` 会根据 key 前缀自动选择默认地址：`tp-` 走 Token Plan 中国集群，其他 key 走普通 API 地址。
+如果没有写 `MIMO_API_URL`，`llm_client.py` 会默认使用官方文档里的 OpenAI 兼容地址：`https://api.mimo-v2.com/v1`。
+如果你当前机器上 `api.mimo-v2.com` 解析失败，可以改回 `https://token-plan-cn.xiaomimimo.com/v1`，只要你用的 key 也确实属于那个集群。
+
+如果偶发返回 500 / 502 / 503 / 504，这通常是上游网关或服务临时抖动，当前实现会自动重试 3 次；如果持续失败，再检查 key、模型名和平台状态。
 
 ## 队友 pull 后启动后端
 

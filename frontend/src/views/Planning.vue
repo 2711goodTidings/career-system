@@ -3,195 +3,147 @@
     <FeaturePageNav current="planning" />
 
     <main class="planning-shell">
-      <section class="cover">
-        <div class="cover-index">CAREER / PLAN / 2026</div>
-        <div class="cover-main">
-          <div>
-            <p class="kicker">大学生智能职业规划系统</p>
+      <section class="plan-card">
+        <header class="plan-header">
+          <div class="header-titles">
+            <span class="kicker-text">CAREER DOSSIER</span>
             <h1>职业成长规划书</h1>
+            <p class="subtitle">面向计算机专业学生的路径判断、能力补强与阶段行动整理。</p>
           </div>
 
-          <div class="cover-side">
-            <span>当前路径</span>
-            <strong>{{ pathResult.recommend_path || '待生成' }}</strong>
-            <p>{{ coverDescription }}</p>
+          <div class="plan-stamp">
+            <label for="planning-path">CURRENT PATH // 当前路径</label>
+            <div class="select-wrapper">
+              <select id="planning-path" v-model="selectedPath" :disabled="loading || yearlyPlanLoading" @change="onPathChange">
+                <option value="" disabled>待生成</option>
+                <option v-for="path in pathOptions" :key="path.value" :value="path.value">
+                  {{ path.label }}
+                </option>
+              </select>
+            </div>
+            <p class="stamp-desc">{{ coverDescription }}</p>
           </div>
+        </header>
+
+        <div v-if="error" class="plan-state danger">
+          <strong>[ ERROR ]</strong>
+          <p>{{ error }}</p>
         </div>
 
-        <div class="cover-actions">
-          <button class="text-btn" @click="goProfile">完善个人信息</button>
-          <button class="text-btn" @click="goCareer">查看职业推荐</button>
-          <button class="solid-btn" @click="loadRecommendation" :disabled="loading">
-            {{ loading ? '正在生成...' : '生成规划' }}
-          </button>
+        <div v-if="!userStore.isLogin" class="plan-state">
+          <strong>AUTHORIZATION REQUIRED</strong>
+          <p>请先登录。系统将结合个人资料、能力评估和职业推荐结果为您生成专属档案。</p>
+        </div>
+
+        <div v-else-if="loading" class="plan-state">
+          <div class="loading-block"></div>
+          <strong>COMPILING DOSSIER...</strong>
+          <p>正在汇总推荐路径、技能短板和阶段任务，请稍候。</p>
+        </div>
+
+        <div v-else-if="recommendation" class="plan-content">
+          <section class="yearly-plan">
+            <div class="yearly-head">
+              <span class="kicker-text">YEARLY ROADMAP</span>
+              <h2>年度规划</h2>
+              <p>依据个人资料、能力评估、职业推荐和当前路径侧重生成。</p>
+            </div>
+
+            <div v-if="yearlyPlanLoading" class="yearly-loading">
+              <div class="loading-block"></div>
+              <p>正在整理每学年的目标、任务和产出...</p>
+            </div>
+
+            <p v-else-if="yearlyPlanError" class="yearly-error">{{ yearlyPlanError }}</p>
+
+            <article v-else class="yearly-paper">
+              {{ yearlyPlan || '暂未形成年度规划。' }}
+            </article>
+          </section>
+
+          <footer class="plan-footer">
+            GENERATED AT / {{ generatedAtText }}
+          </footer>
+        </div>
+
+        <div v-else class="plan-state empty">
+          <strong>NO DATA</strong>
+          <p>完善个人信息并完成能力评估后，系统会自动整理大学剩余学年的年度安排。</p>
         </div>
       </section>
 
-      <section v-if="error" class="notice danger">
-        <strong>提示</strong>
-        <p>{{ error }}</p>
-      </section>
-
-      <section v-if="!userStore.isLogin" class="notice">
-        <strong>请先登录</strong>
-        <p>登录后，系统会结合你的个人信息、职业倾向和推荐结果生成成长规划。</p>
-      </section>
-
-      <section v-else-if="loading" class="notice">
-        <strong>正在生成规划</strong>
-        <p>系统正在整理推荐路径、技能差距和阶段任务，请稍候。</p>
-      </section>
-
-      <template v-else-if="recommendation">
-        <section class="overview">
-          <article class="overview-block primary">
-            <span>推荐路径</span>
-            <strong>{{ pathResult.recommend_path || '--' }}</strong>
-            <p>{{ pathResult.analysis_text || '暂无路径分析。' }}</p>
-          </article>
-
-          <article class="overview-block">
-            <span>首选职业</span>
-            <strong>{{ topCareer?.career_name || '--' }}</strong>
-            <p>匹配度 {{ formatScore(topCareer?.match_score) }} 分</p>
-          </article>
-
-          <article class="overview-block">
-            <span>优先补强</span>
-            <strong>{{ skillGaps[0] || '待明确' }}</strong>
-            <p>{{ skillGaps.length ? `共识别 ${skillGaps.length} 个技能补强点` : '推荐结果中暂无技能差距。' }}</p>
-          </article>
-        </section>
-
-        <section class="roadmap">
+      <section class="consultation-panel">
+        <div class="panel-inner">
           <div class="section-head">
-            <span>01</span>
-            <h2>阶段路线</h2>
+            <span class="kicker-text">PLANNING INQUIRY</span>
+            <h2>规划问答</h2>
           </div>
 
-          <div class="timeline">
-            <article v-for="stage in roadmapStages" :key="stage.title" class="timeline-item">
-              <div class="timeline-mark">{{ stage.index }}</div>
-              <div class="timeline-content">
-                <span>{{ stage.period }}</span>
-                <h3>{{ stage.title }}</h3>
-                <p>{{ stage.desc }}</p>
-                <ol>
-                  <li v-for="task in stage.tasks" :key="task">{{ task }}</li>
-                </ol>
+          <section v-if="!userStore.isLogin" class="notice consultation-notice">
+            <strong>需要权限</strong>
+            <p>登录后可以结合你的资料、测评结果和推荐路径进行深度咨询。</p>
+          </section>
+
+          <template v-else>
+            <div class="quick-questions">
+              <button
+                v-for="item in quickQuestions"
+                :key="item"
+                class="sharp-btn-outline"
+                type="button"
+                @click="sendQuestion(item)"
+                :disabled="aiLoading"
+              >
+                {{ item }}
+              </button>
+            </div>
+
+            <div ref="chatDossierRef" class="chat-dossier">
+              <div v-if="!chatMessages.length" class="empty-text">
+                [ 记录为空 ] 可以继续追问就业、考研、项目、算法、简历或具体技术方向。
               </div>
-            </article>
-          </div>
-        </section>
-
-        <section class="planning-grid">
-          <article class="sheet">
-            <div class="section-head">
-              <span>02</span>
-              <h2>技能清单</h2>
+              <article
+                v-for="message in chatMessages"
+                :key="message.id"
+                class="dossier-entry"
+                :class="message.role"
+              >
+                <div class="entry-role">{{ message.role === 'user' ? 'Q.' : 'A.' }}</div>
+                <div class="entry-body">
+                  <p>{{ message.content }}</p>
+                  <small v-if="message.meta">{{ message.meta }}</small>
+                </div>
+              </article>
             </div>
 
-            <div v-if="skillGaps.length" class="skill-table">
-              <div v-for="(skill, index) in skillGaps" :key="skill" class="skill-row">
-                <span>{{ String(index + 1).padStart(2, '0') }}</span>
-                <strong>{{ skill }}</strong>
-                <em>{{ index < 3 ? '优先' : '储备' }}</em>
-              </div>
+            <p v-if="aiError" class="consultation-error">{{ aiError }}</p>
+
+            <div class="chat-input-matrix">
+              <textarea
+                v-model="aiQuestion"
+                rows="3"
+                placeholder="在此输入需要探讨的问题..."
+                :disabled="aiLoading"
+              ></textarea>
+              <button class="sharp-btn-solid" type="button" @click="sendQuestion()" :disabled="aiLoading">
+                {{ aiLoading ? 'PROCESSING' : 'SUBMIT' }}
+              </button>
             </div>
-            <p v-else class="empty-text">暂无明确技能短板，可以先根据目标职业补充项目经验。</p>
-          </article>
-
-          <article class="sheet">
-            <div class="section-head">
-              <span>03</span>
-              <h2>行动建议</h2>
-            </div>
-
-            <div v-if="adviceList.length" class="advice-list">
-              <div v-for="(item, index) in adviceList" :key="item" class="advice-item">
-                <span>{{ index + 1 }}</span>
-                <p>{{ item }}</p>
-              </div>
-            </div>
-            <p v-else class="empty-text">暂无建议，请先生成职业推荐结果。</p>
-          </article>
-        </section>
-      </template>
-
-      <section v-else class="notice">
-        <strong>暂无规划</strong>
-        <p>完善个人信息后点击“生成规划”，系统会自动生成阶段路线、技能清单和行动建议。</p>
-      </section>
-
-      <section class="sheet ai-chat">
-        <div class="section-head">
-          <span>AI</span>
-          <h2>AI 职业规划问答</h2>
+          </template>
         </div>
-
-        <section v-if="!userStore.isLogin" class="notice ai-notice">
-          <strong>请先登录</strong>
-          <p>登录后可以结合你的资料、测评结果和推荐路径咨询计算机专业职业规划问题。</p>
-        </section>
-
-        <template v-else>
-          <div class="quick-questions">
-            <button
-              v-for="item in quickQuestions"
-              :key="item"
-              class="text-btn quick-btn"
-              type="button"
-              @click="sendQuestion(item)"
-              :disabled="aiLoading"
-            >
-              {{ item }}
-            </button>
-          </div>
-
-          <div class="chat-list">
-            <div v-if="!chatMessages.length" class="empty-text">
-              可以直接提问就业、考研、项目、算法、简历或具体技术方向。
-            </div>
-            <article
-              v-for="message in chatMessages"
-              :key="message.id"
-              class="chat-message"
-              :class="message.role"
-            >
-              <span>{{ message.role === 'user' ? '我' : 'AI' }}</span>
-              <p>{{ message.content }}</p>
-              <small v-if="message.meta">{{ message.meta }}</small>
-            </article>
-          </div>
-
-          <p v-if="aiError" class="ai-error">{{ aiError }}</p>
-
-          <div class="chat-input">
-            <textarea
-              v-model="aiQuestion"
-              rows="4"
-              placeholder="请输入你的问题，例如：我适合就业还是考研？"
-              :disabled="aiLoading"
-            ></textarea>
-            <button class="solid-btn" type="button" @click="sendQuestion()" :disabled="aiLoading">
-              {{ aiLoading ? '发送中...' : '发送' }}
-            </button>
-          </div>
-        </template>
       </section>
     </main>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+// [你的原生 script 内容完全保持不变，不要做任何删减]
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import FeaturePageNav from '../components/FeaturePageNav.vue'
 import { getCareerRecommendation } from '../api/career'
-import { askPlanningAI } from '../api/planning'
+import { askPlanningAI, generateYearlyPlanning } from '../api/planning'
 import { useUserStore } from '../stores/user'
 
-const router = useRouter()
 const userStore = useUserStore()
 
 const loading = ref(false)
@@ -201,6 +153,20 @@ const aiLoading = ref(false)
 const aiQuestion = ref('')
 const aiError = ref('')
 const chatMessages = ref([])
+const chatDossierRef = ref(null)
+const selectedPath = ref('')
+const selectedPathTouched = ref(false)
+const yearlyPlan = ref('')
+const yearlyPlanLoading = ref(false)
+const yearlyPlanError = ref('')
+const generatedAt = ref('')
+
+const pathOptions = [
+  { value: '就业', label: '就业' },
+  { value: '考研', label: '考研' },
+  { value: '考公', label: '考公 / 事业单位' },
+  { value: '留学', label: '留学' }
+]
 
 const quickQuestions = [
   '我适合就业还是考研？',
@@ -210,72 +176,76 @@ const quickQuestions = [
 ]
 
 const pathResult = computed(() => recommendation.value?.path_result || {})
-const careerList = computed(() => recommendation.value?.career_list || [])
-const topCareer = computed(() => careerList.value[0] || null)
-const adviceList = computed(() => recommendation.value?.advice_list || [])
 
-const skillGaps = computed(() => {
-  const result = []
-  careerList.value.forEach((career) => {
-    ;(career.gap_skills || []).forEach((skill) => {
-      if (skill && !result.includes(skill)) result.push(skill)
-    })
-  })
-  return result.slice(0, 8)
+const activePathLabel = computed(() => {
+  return selectedPath.value || pathResult.value.recommend_path || '待生成'
 })
+
+const generatedAtText = computed(() => generatedAt.value || new Date().toLocaleString())
 
 const coverDescription = computed(() => {
   if (!userStore.isLogin) return '登录后即可生成专属职业成长路线。'
-  if (loading.value) return '系统正在整理你的规划档案。'
+  if (loading.value) return '正在整理你的规划档案。'
   if (!recommendation.value) return '完善资料后生成一份可执行的成长规划。'
   return '规划已根据职业推荐结果生成，可继续完善资料后刷新。'
 })
 
-const roadmapStages = computed(() => {
-  const pathName = pathResult.value.recommend_path || '目标方向'
-  const careerName = topCareer.value?.career_name || '目标职业'
-  const skills = skillGaps.value
+function toPlainText(text) {
+  return String(text || '')
+    .replace(/\*\*/g, '')
+    .replace(/^#{1,6}\s*/gm, '')
+    .replace(/^\s*[-*]\s+/gm, '')
+    .replace(/`{1,3}/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
 
-  return [
-    {
-      index: 'A',
-      period: '第 1 阶段 / 1-2 周',
-      title: '定位与校准',
-      desc: `把“${pathName}”从模糊倾向变成清晰目标，先完成资料、方向和衡量标准的校准。`,
-      tasks: [
-        '补全个人简介、兴趣方向、已有技能和职业目标',
-        `阅读并确认“${careerName}”的岗位或升学要求`,
-        skills[0] ? `优先梳理 ${skills[0]} 的学习路径` : '选择一个核心技能作为本阶段主线'
-      ]
-    },
-    {
-      index: 'B',
-      period: '第 2 阶段 / 3-6 周',
-      title: '能力补强',
-      desc: '围绕推荐结果补齐短板，用可见产出替代泛泛学习。',
-      tasks: [
-        skills[1] ? `完成一个包含 ${skills[1]} 的小型练习` : '完成一个小型项目或专题练习',
-        '每周记录一次学习结果、问题和下一步改进',
-        '把练习成果整理成可展示的项目说明'
-      ]
-    },
-    {
-      index: 'C',
-      period: '第 3 阶段 / 7-12 周',
-      title: '成果打磨',
-      desc: '把能力沉淀到简历、作品集、申请材料或面试表达中。',
-      tasks: [
-        skills[2] ? `继续补强 ${skills[2]} 并加入作品材料` : '补充一项进阶能力并形成证明材料',
-        '整理简历、项目文档或升学申请材料',
-        '更新个人信息并重新生成职业推荐，检查方向是否变化'
-      ]
-    }
+function trimYearlyPlanIntro(text) {
+  const plain = toPlainText(text)
+  const headingMatch = plain.match(/(?:^|\n)\s*[一二三四五六七八九十]+[、.．]\s*(大一|大二|大三|大四|研一|研二|当前学年|本学年|剩余学年|毕业前|年度|阶段)/)
+  if (headingMatch?.index !== undefined) {
+    return plain.slice(headingMatch.index).trim()
+  }
+
+  const introPrefixes = [
+    '学生信息',
+    '学校：',
+    '学校:',
+    '年级：',
+    '年级:',
+    '专业：',
+    '专业:',
+    '本次规划路径',
+    '本次规划路线',
+    '路径说明',
+    '规划说明',
+    '当前判断'
   ]
-})
+  const lines = plain.split('\n')
+  while (lines.length) {
+    const line = lines[0].trim()
+    if (!line || introPrefixes.some(prefix => line.startsWith(prefix))) {
+      lines.shift()
+    } else {
+      break
+    }
+  }
+  return lines.join('\n').trim()
+}
 
-function formatScore(value) {
-  const score = Number(value)
-  return Number.isFinite(score) ? score.toFixed(1) : '--'
+function formatGeneratedAt(value) {
+  if (!value) return new Date().toLocaleString()
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString()
+}
+
+function scrollChatToBottom() {
+  nextTick(() => {
+    const el = chatDossierRef.value
+    if (el) {
+      el.scrollTop = el.scrollHeight
+    }
+  })
 }
 
 async function loadRecommendation() {
@@ -290,6 +260,11 @@ async function loadRecommendation() {
 
   try {
     recommendation.value = await getCareerRecommendation(userStore.userId)
+    const recommendedPath = recommendation.value?.path_result?.recommend_path
+    if (!selectedPathTouched.value && recommendedPath) {
+      selectedPath.value = recommendedPath
+    }
+    await loadYearlyPlan()
   } catch (err) {
     error.value = err.message || '生成职业规划失败。'
     recommendation.value = null
@@ -298,12 +273,35 @@ async function loadRecommendation() {
   }
 }
 
-function goProfile() {
-  router.push('/profile')
+async function loadYearlyPlan() {
+  if (!userStore.isLogin || !userStore.userId) return
+
+  yearlyPlanLoading.value = true
+  yearlyPlanError.value = ''
+
+  try {
+    const response = await generateYearlyPlanning(userStore.userId, activePathLabel.value)
+    const data = response.data || response
+    if (data.success) {
+      yearlyPlan.value = trimYearlyPlanIntro(data.answer) || '暂未形成年度规划。'
+      generatedAt.value = formatGeneratedAt(data.created_at)
+    } else {
+      yearlyPlan.value = ''
+      yearlyPlanError.value = data.error || '年度规划暂时无法生成，请稍后重试。'
+    }
+  } catch (err) {
+    yearlyPlan.value = ''
+    yearlyPlanError.value = err.response?.data?.detail || err.message || '年度规划请求失败，请稍后重试。'
+  } finally {
+    yearlyPlanLoading.value = false
+  }
 }
 
-function goCareer() {
-  router.push('/career')
+function onPathChange() {
+  selectedPathTouched.value = true
+  if (recommendation.value && userStore.isLogin && userStore.userId) {
+    loadYearlyPlan()
+  }
 }
 
 function getChatStorageKey() {
@@ -318,7 +316,13 @@ function loadChatMessages() {
 
   try {
     const saved = localStorage.getItem(getChatStorageKey())
-    chatMessages.value = saved ? JSON.parse(saved) : []
+    chatMessages.value = saved
+      ? JSON.parse(saved).map(message => ({
+          ...message,
+          content: message.role === 'assistant' ? toPlainText(message.content) : message.content
+        }))
+      : []
+    scrollChatToBottom()
   } catch (err) {
     chatMessages.value = []
   }
@@ -337,11 +341,12 @@ function appendChatMessage(role, content, meta = '') {
     meta
   })
   saveChatMessages()
+  scrollChatToBottom()
 }
 
 async function sendQuestion(presetQuestion = '') {
   if (!userStore.isLogin || !userStore.userId) {
-    aiError.value = '请先登录后再使用 AI 职业规划问答。'
+    aiError.value = '请先登录后再使用规划咨询。'
     return
   }
 
@@ -360,15 +365,14 @@ async function sendQuestion(presetQuestion = '') {
     const response = await askPlanningAI(userStore.userId, question)
     const data = response.data || response
     if (data.success) {
-      const meta = [data.provider, data.model].filter(Boolean).join(' / ')
-      appendChatMessage('assistant', data.answer || 'AI 暂未返回内容。', meta)
+      appendChatMessage('assistant', toPlainText(data.answer) || '暂未形成回复。')
     } else {
-      const message = data.error || 'AI 服务暂时不可用，请稍后重试。'
+      const message = data.error || '规划咨询暂时不可用，请稍后重试。'
       aiError.value = message
       appendChatMessage('assistant', message)
     }
   } catch (err) {
-    const message = err.response?.data?.detail || err.message || 'AI 问答请求失败，请稍后重试。'
+    const message = err.response?.data?.detail || err.message || '规划咨询请求失败，请稍后重试。'
     aiError.value = message
     appendChatMessage('assistant', message)
   } finally {
@@ -389,491 +393,460 @@ watch(
     loadChatMessages()
   }
 )
+
+watch(
+  () => chatMessages.value.length,
+  () => {
+    scrollChatToBottom()
+  }
+)
 </script>
 
 <style scoped>
+/* 
+ * 核心重构理念：
+ * 1. 彻底去除所有 border-radius (圆角边框)
+ * 2. 采用 Editorial / 档案风格，利用纯色、细线、锐利对比 
+ * 3. 移除常见的对话气泡，改用 Q/A 访谈笔录的纯文本排版
+ * 4. 动画用闪烁光标/方块替代常规加载圈
+ */
+
 * {
   box-sizing: border-box;
 }
 
 .planning-page {
   min-height: 100vh;
-  background: #1f5d95;
-  color: #1f5d95;
+  background:
+    linear-gradient(rgba(48, 72, 90, 0.42), rgba(38, 61, 79, 0.5)),
+    url('../assets/planning_background.jpg') center / cover fixed;
+  color: #263d4f;
   font-family: "Times New Roman", "Georgia", "PingFang SC", "Microsoft YaHei", serif;
-  padding: 34px;
+  padding: 40px;
 }
 
 .planning-shell {
-  width: min(1280px, 100%);
+  width: min(1200px, 100%);
   margin: 0 auto;
-}
-
-.cover,
-.notice,
-.overview-block,
-.roadmap,
-.sheet {
-  background: #f5f5f3;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-}
-
-.cover {
-  min-height: 520px;
-  padding: 28px 42px 38px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  margin-bottom: 26px;
+  gap: 40px;
 }
 
-.cover-index {
-  color: #1f5d95;
-  font-size: 18px;
-  letter-spacing: 6px;
+/* ================= 通用文本样式 ================= */
+.kicker-text {
+  display: block;
+  color: #496274;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
-.cover-main {
+/* ================= 档案主卡片 ================= */
+.plan-card {
+  background: rgba(232, 239, 243, 0.93);
+  border: 1px solid #8fa0ad;
+  /* 取消模糊和轻柔阴影，改为硬朗的线条感 */
+  box-shadow: 8px 8px 0px rgba(38, 61, 79, 0.32);
+}
+
+.plan-header {
+  padding: 48px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 34px;
-  align-items: end;
+  gap: 48px;
+  align-items: stretch;
+  border-bottom: 2px solid #263d4f;
 }
 
-.kicker {
-  margin: 0 0 16px;
-  color: #5d84a8;
+.header-titles h1 {
+  margin: 16px 0;
+  color: #263d4f;
+  font-size: clamp(48px, 6vw, 84px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.subtitle {
+  margin: 0;
+  color: #41586a;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.plan-stamp {
+  padding-left: 32px;
+  border-left: 1px solid #8fa0ad;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.plan-stamp label {
+  color: #496274;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+}
+
+.select-wrapper {
+  position: relative;
+}
+
+.plan-stamp select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #263d4f;
+  background: transparent;
+  color: #263d4f;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  outline: none;
+  border-radius: 0;
+  appearance: none;
+  cursor: pointer;
+}
+
+.select-wrapper::after {
+  content: '▼';
+  font-size: 10px;
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #263d4f;
+}
+
+.stamp-desc {
+  margin-top: 16px;
+  color: #496274;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ================= 状态区域 ================= */
+.plan-state {
+  padding: 80px 48px;
+  text-align: center;
+  border-bottom: 1px solid #8fa0ad;
+}
+
+.plan-state strong {
+  display: block;
+  margin-bottom: 12px;
+  color: #263d4f;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 24px;
   letter-spacing: 2px;
 }
 
-.cover h1 {
+.plan-state p {
   margin: 0;
-  max-width: 760px;
-  color: #1f5d95;
-  font-size: clamp(68px, 10vw, 132px);
-  font-weight: 500;
-  line-height: 0.92;
-  letter-spacing: 0;
+  color: #41586a;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
-.cover-side {
-  border-left: 1px solid rgba(31, 93, 149, 0.35);
-  padding-left: 24px;
+.plan-state.danger strong,
+.plan-state.danger p,
+.consultation-error,
+.yearly-error {
+  color: #b91c1c;
 }
 
-.cover-side span,
-.overview-block span,
-.skill-row span,
-.skill-row em {
-  color: #5d84a8;
-  font-size: 12px;
-  letter-spacing: 1.5px;
+/* 用闪烁的方块代替圆形的 Spinner，削弱 AI 味，增加终端/打字机感 */
+.loading-block {
+  width: 16px;
+  height: 24px;
+  background: #263d4f;
+  margin: 0 auto 20px;
+  animation: blink 1s step-end infinite;
 }
 
-.cover-side strong {
-  display: block;
-  margin: 14px 0;
-  color: #1f5d95;
-  font-size: 42px;
-  font-weight: 500;
-  line-height: 1.05;
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
-.cover-side p,
-.notice p,
-.overview-block p,
-.timeline-content p,
-.advice-item p,
-.empty-text {
-  margin: 0;
-  color: #3d5a7a;
-  font-size: 15px;
-  line-height: 1.85;
+/* ================= 年度规划内容 ================= */
+.plan-content {
+  padding: 48px;
 }
 
-.cover-actions {
+.yearly-plan {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 48px;
+}
+
+.yearly-head {
+  position: sticky;
+  top: 40px;
+  align-self: start;
+}
+
+.yearly-head h2 {
+  margin: 16px 0;
+  color: #263d4f;
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.yearly-head p {
+  color: #41586a;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.yearly-loading {
+  min-height: 300px;
   display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 18px;
-  border-top: 1px solid rgba(31, 93, 149, 0.18);
-  padding-top: 22px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
 }
 
-button {
-  font-family: inherit;
+.yearly-paper {
+  min-height: 400px;
+  padding: 32px;
+  background: rgba(221, 231, 237, 0.88);
+  border: 1px solid #a9b8c3;
+  border-top: 4px solid #263d4f;
+  color: #30485a;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 15px;
+  line-height: 2;
+  white-space: pre-wrap;
 }
 
-.text-btn,
-.solid-btn {
-  border: none;
-  cursor: pointer;
-  padding: 11px 4px;
-  font-size: 13px;
+.plan-footer {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid #a9b8c3;
+  text-align: right;
+  color: #9ca3af;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 12px;
   letter-spacing: 1px;
 }
 
-.text-btn {
-  background: transparent;
-  color: #1f5d95;
-  border-bottom: 1px solid rgba(31, 93, 149, 0.45);
+/* ================= 问答模块 (无气泡纪实风格) ================= */
+.consultation-panel {
+  background: rgba(232, 239, 243, 0.93);
+  border: 1px solid #8fa0ad;
+  box-shadow: 8px 8px 0px rgba(38, 61, 79, 0.32);
 }
 
-.solid-btn {
-  background: #1f5d95;
-  color: #f5f5f3;
-  padding: 12px 22px;
+.panel-inner {
+  padding: 48px;
 }
 
-.solid-btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
+.section-head h2 {
+  margin: 12px 0 32px;
+  color: #263d4f;
+  font-size: 32px;
+  font-weight: 600;
 }
 
 .notice {
-  padding: 30px 34px;
-  margin-bottom: 24px;
-  border-left: 8px solid #7fa3c4;
+  padding: 24px;
+  border: 1px solid #263d4f;
+  border-left: 6px solid #263d4f;
+  background: rgba(221, 231, 237, 0.88);
 }
 
 .notice strong {
   display: block;
+  font-size: 18px;
   margin-bottom: 8px;
-  color: #1f5d95;
-  font-size: 28px;
-  font-weight: 500;
 }
 
-.notice.danger {
-  border-left-color: #a54a4a;
-}
-
-.overview {
-  display: grid;
-  grid-template-columns: 1.2fr 0.9fr 0.9fr;
-  gap: 18px;
-  margin-bottom: 24px;
-}
-
-.overview-block {
-  min-height: 220px;
-  padding: 26px;
-  border-top: 8px solid rgba(127, 163, 196, 0.65);
-}
-
-.overview-block.primary {
-  border-top-color: #1f5d95;
-}
-
-.overview-block strong {
-  display: block;
-  margin: 14px 0;
-  color: #1f5d95;
-  font-size: 38px;
-  font-weight: 500;
-  line-height: 1.1;
-}
-
-.roadmap,
-.sheet {
-  padding: 30px;
-  margin-bottom: 24px;
-}
-
-.section-head {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  margin-bottom: 24px;
-}
-
-.section-head > span {
-  color: #7fa3c4;
-  font-size: 20px;
-  letter-spacing: 2px;
-}
-
-.section-head h2 {
-  margin: 0;
-  color: #1f5d95;
-  font-size: 44px;
-  line-height: 1;
-  font-weight: 500;
-}
-
-.timeline {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0;
-  border-top: 1px solid rgba(31, 93, 149, 0.35);
-  border-left: 1px solid rgba(31, 93, 149, 0.35);
-}
-
-.timeline-item {
-  min-height: 420px;
-  display: grid;
-  grid-template-rows: 90px 1fr;
-  border-right: 1px solid rgba(31, 93, 149, 0.35);
-  border-bottom: 1px solid rgba(31, 93, 149, 0.35);
-  background: #ffffff;
-}
-
-.timeline-mark {
-  display: flex;
-  align-items: center;
-  padding: 0 22px;
-  border-bottom: 1px solid rgba(31, 93, 149, 0.18);
-  color: #1f5d95;
-  font-size: 46px;
-  line-height: 1;
-}
-
-.timeline-content {
-  padding: 24px 22px 28px;
-}
-
-.timeline-content span {
-  color: #5d84a8;
-  font-size: 12px;
-  letter-spacing: 1.5px;
-}
-
-.timeline-content h3 {
-  margin: 16px 0 12px;
-  color: #1f5d95;
-  font-size: 34px;
-  font-weight: 500;
-  line-height: 1.08;
-}
-
-.timeline-content ol {
-  margin: 20px 0 0;
-  padding-left: 20px;
-  color: #3d5a7a;
-  line-height: 1.8;
-}
-
-.timeline-content li + li {
-  margin-top: 8px;
-}
-
-.planning-grid {
-  display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
-  gap: 24px;
-}
-
-.skill-table {
-  border-top: 1px solid rgba(31, 93, 149, 0.26);
-}
-
-.skill-row {
-  display: grid;
-  grid-template-columns: 52px 1fr 54px;
-  align-items: center;
-  min-height: 58px;
-  border-bottom: 1px solid rgba(31, 93, 149, 0.18);
-}
-
-.skill-row strong {
-  color: #1f5d95;
-  font-size: 20px;
-  font-weight: 500;
-}
-
-.skill-row em {
-  font-style: normal;
-  text-align: right;
-}
-
-.advice-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.advice-item {
-  display: grid;
-  grid-template-columns: 42px 1fr;
-  gap: 14px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(31, 93, 149, 0.18);
-}
-
-.advice-item span {
-  color: #1f5d95;
-  font-size: 28px;
-  line-height: 1;
-}
-
-.ai-chat {
-  margin-top: 24px;
-}
-
-.ai-notice {
-  margin-bottom: 0;
-  box-shadow: none;
-}
-
+/* 快捷问题按钮 */
 .quick-questions {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 32px;
 }
 
-.quick-btn {
-  padding: 9px 0;
+.sharp-btn-outline {
+  padding: 10px 16px;
+  border: 1px solid #8fa0ad;
+  background: transparent;
+  color: #30485a;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 0; /* 绝对无圆角 */
+  transition: all 0.2s ease;
 }
 
-.chat-list {
+.sharp-btn-outline:hover:not(:disabled) {
+  border-color: #263d4f;
+  background: #263d4f;
+  color: #ffffff;
+}
+
+/* 聊天记录 - 访谈记录流排版 */
+.chat-dossier {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  min-height: 180px;
-  max-height: 520px;
+  border-top: 1px solid #263d4f;
+  border-bottom: 1px solid #263d4f;
+  min-height: 200px;
+  max-height: 500px;
   overflow-y: auto;
-  padding: 18px 0;
-  border-top: 1px solid rgba(31, 93, 149, 0.18);
-  border-bottom: 1px solid rgba(31, 93, 149, 0.18);
+  background: rgba(232, 239, 243, 0.78);
 }
 
-.chat-message {
-  max-width: 86%;
-  padding: 14px 16px;
-  background: #ffffff;
-  border-left: 4px solid #7fa3c4;
+.empty-text {
+  padding: 32px 0;
+  color: #9ca3af;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
 }
 
-.chat-message.user {
-  align-self: flex-end;
-  border-left-color: transparent;
-  border-right: 4px solid #1f5d95;
+.dossier-entry {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  padding: 24px 0;
+  border-bottom: 1px solid #a9b8c3;
 }
 
-.chat-message span {
-  display: block;
-  margin-bottom: 8px;
-  color: #5d84a8;
-  font-size: 12px;
-  letter-spacing: 1.5px;
+.dossier-entry:last-child {
+  border-bottom: none;
 }
 
-.chat-message p {
+.entry-role {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #263d4f;
+}
+
+.dossier-entry.assistant .entry-role {
+  color: #496274; /* AI 的前缀稍微浅一点，拉开层次 */
+}
+
+.entry-body p {
   margin: 0;
-  color: #3d5a7a;
+  color: #263d4f;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 15px;
   line-height: 1.8;
   white-space: pre-wrap;
 }
 
-.chat-message small {
+.dossier-entry.assistant .entry-body p {
+  color: #30485a;
+}
+
+.entry-body small {
   display: block;
-  margin-top: 8px;
-  color: #7fa3c4;
+  margin-top: 12px;
+  color: #9ca3af;
+  font-size: 12px;
 }
 
-.ai-error {
-  margin: 14px 0 0;
-  color: #a54a4a;
-  line-height: 1.7;
-}
-
-.chat-input {
+/* 输入框区域 - 矩阵式无缝衔接设计 */
+.chat-input-matrix {
+  margin-top: 32px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 120px;
-  gap: 14px;
-  align-items: end;
-  margin-top: 18px;
+  grid-template-columns: minmax(0, 1fr) 140px;
+  border: 1px solid #263d4f;
+  background: rgba(232, 239, 243, 0.93);
 }
 
-.chat-input textarea {
+.chat-input-matrix textarea {
   width: 100%;
-  resize: vertical;
-  min-height: 112px;
-  border: 1px solid rgba(31, 93, 149, 0.28);
-  background: #ffffff;
-  color: #1f5d95;
-  padding: 14px;
-  font-family: inherit;
-  font-size: 15px;
-  line-height: 1.6;
+  resize: none;
+  border: none;
+  min-height: 20px;
+  padding: 2px 10px;
+  color: #263d4f;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+  line-height: 1.35;
   outline: none;
+  background: transparent;
 }
 
-.chat-input textarea:focus {
-  border-color: #1f5d95;
+.sharp-btn-solid {
+  width: 100%;
+  height: 100%;
+  min-height: 20px;
+  border: none;
+  border-left: 1px solid #263d4f;
+  background: #263d4f;
+  color: #ffffff;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  cursor: pointer;
+  border-radius: 0;
 }
 
+.sharp-btn-solid:disabled {
+  background: #496274;
+  cursor: not-allowed;
+}
+
+/* ================= 响应式调整 ================= */
 @media (max-width: 1024px) {
-  .cover-main,
-  .overview,
-  .timeline,
-  .planning-grid {
+  .plan-header {
     grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 32px;
   }
 
-  .cover-side {
+  .plan-stamp {
+    padding-left: 0;
     border-left: none;
-    border-top: 1px solid rgba(31, 93, 149, 0.35);
-    padding: 22px 0 0;
+    border-top: 1px solid #8fa0ad;
+    padding-top: 24px;
   }
 
-  .timeline-item {
-    min-height: auto;
+  .yearly-plan {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .yearly-head {
+    position: static;
   }
 }
 
 @media (max-width: 768px) {
   .planning-page {
-    padding: 18px 14px 28px;
-  }
-
-  .cover,
-  .roadmap,
-  .sheet,
-  .notice,
-  .overview-block {
     padding: 20px;
   }
 
-  .cover {
-    min-height: 500px;
+  .plan-state, .plan-content, .panel-inner {
+    padding: 24px;
   }
 
-  .cover-index {
-    font-size: 13px;
-    letter-spacing: 3px;
+  .header-titles h1 {
+    font-size: clamp(36px, 10vw, 48px);
   }
 
-  .cover h1 {
-    font-size: clamp(52px, 18vw, 78px);
-  }
-
-  .cover-actions {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .text-btn,
-  .solid-btn {
-    width: 100%;
-    text-align: center;
-  }
-
-  .chat-message {
-    max-width: 100%;
-  }
-
-  .chat-input {
+  .chat-input-matrix {
     grid-template-columns: 1fr;
+    grid-template-rows: auto 48px;
   }
 
-  .section-head h2 {
-    font-size: 34px;
+  .sharp-btn-solid {
+    border-left: none;
+    border-top: 1px solid #263d4f;
   }
-
 }
 </style>

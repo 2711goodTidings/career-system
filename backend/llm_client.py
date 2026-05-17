@@ -1,9 +1,11 @@
 import json
 import os
+import random
 import urllib.error
 import urllib.request
+import time
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Optional
 from urllib.parse import urljoin
 
 from dotenv import load_dotenv
@@ -18,6 +20,9 @@ class LLMConfigError(Exception):
 
 class LLMServiceError(Exception):
     """Raised when the configured AI service cannot complete the request."""
+
+
+RETRYABLE_HTTP_STATUS_CODES = {429, 500, 502, 503, 504}
 
 
 @dataclass
@@ -86,7 +91,7 @@ def get_llm_config() -> LLMConfig:
     base_url = _read_env("LLM_BASE_URL", "MIMO_API_URL", "MIMO_BASE_URL")
     model = _read_env("LLM_MODEL", "MIMO_MODEL")
     if not base_url and provider.lower() == "mimo":
-        base_url = "https://token-plan-cn.xiaomimimo.com/v1" if api_key.startswith("tp-") else "https://api.xiaomimimo.com/v1"
+        base_url = "https://token-plan-cn.xiaomimimo.com/v1" if api_key.startswith("tp-") else "https://api.mimo-v2.com/v1"
     chat_path = _read_env("LLM_CHAT_PATH", "MIMO_CHAT_PATH", default="/chat/completions") or "/chat/completions"
     api_key_header = _read_env("LLM_API_KEY_HEADER", "MIMO_API_KEY_HEADER")
     if not api_key_header:
@@ -124,17 +129,37 @@ def _build_chat_url(base_url: str, chat_path: str) -> str:
     return urljoin(clean_base, clean_path)
 
 
-def chat_completion(messages: List[Dict[str, str]]) -> Dict[str, str]:
+def _retry_delay_seconds(attempt: int, headers: Optional[object] = None) -> float:
+    retry_after = None
+    if headers is not None:
+        retry_after = getattr(headers, "get", lambda *_: None)("Retry-After")
+    if retry_after:
+        try:
+            return max(0.0, float(retry_after))
+        except (TypeError, ValueError):
+            pass
+    return min((2 ** attempt) + random.random(), 8.0)
+
+
+def _read_http_error_body(exc: urllib.error.HTTPError) -> str:
+    try:
+        return exc.read().decode("utf-8", errors="ignore").strip()
+    except Exception:
+        return ""
+
+
+def chat_completion(messages: List[Dict[str, str]], max_tokens: Optional[int] = None) -> Dict[str, str]:
     config = get_llm_config()
+    token_limit = max_tokens if max_tokens and max_tokens > 0 else config.max_tokens
     payload = {
         "model": config.model,
         "messages": messages,
         "temperature": config.temperature,
     }
     if config.provider.lower() == "mimo":
-        payload["max_completion_tokens"] = config.max_tokens
+        payload["max_completion_tokens"] = token_limit
     else:
-        payload["max_tokens"] = config.max_tokens
+        payload["max_tokens"] = token_limit
 
     auth_headers = {
         "Content-Type": "application/json",
@@ -151,16 +176,38 @@ def chat_completion(messages: List[Dict[str, str]]) -> Dict[str, str]:
         method="POST",
     )
 
-    try:
-        with urllib.request.urlopen(request, timeout=60) as response:
-            response_data = response.read().decode("utf-8")
-    except urllib.error.HTTPError as exc:
-        error_body = exc.read().decode("utf-8", errors="ignore")
-        raise LLMServiceError(f"AI 服务调用失败（HTTP {exc.code}）：{error_body or exc.reason}") from exc
-    except urllib.error.URLError as exc:
-        raise LLMServiceError(f"AI 服务连接失败：{exc.reason}") from exc
-    except TimeoutError as exc:
-        raise LLMServiceError("AI 服务响应超时，请稍后重试") from exc
+    last_error: Optional[LLMServiceError] = None
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                response_data = response.read().decode("utf-8")
+            break
+        except urllib.error.HTTPError as exc:
+            error_body = _read_http_error_body(exc)
+            if exc.code in RETRYABLE_HTTP_STATUS_CODES and attempt < 2:
+                time.sleep(_retry_delay_seconds(attempt, exc.headers))
+                last_error = LLMServiceError(
+                    f"AI 服务临时错误（HTTP {exc.code}）：{error_body or exc.reason}，正在重试"
+                )
+                continue
+            raise LLMServiceError(f"AI 服务调用失败（HTTP {exc.code}）：{error_body or exc.reason}") from exc
+        except urllib.error.URLError as exc:
+            reason = str(exc.reason)
+            if attempt < 2 and ("timed out" in reason.lower() or "timeout" in reason.lower()):
+                time.sleep(_retry_delay_seconds(attempt))
+                last_error = LLMServiceError(f"AI 服务连接超时：{reason}，正在重试")
+                continue
+            raise LLMServiceError(f"AI 服务连接失败：{reason}") from exc
+        except TimeoutError as exc:
+            if attempt < 2:
+                time.sleep(_retry_delay_seconds(attempt))
+                last_error = LLMServiceError("AI 服务响应超时，正在重试")
+                continue
+            raise LLMServiceError("AI 服务响应超时，请稍后重试") from exc
+    else:
+        if last_error:
+            raise last_error
+        raise LLMServiceError("AI 服务调用失败，请稍后重试")
 
     try:
         data = json.loads(response_data)
