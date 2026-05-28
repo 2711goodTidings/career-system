@@ -2,10 +2,10 @@
   <section class="login-section">
     <div class="login-wrapper">
       <aside class="feature-panel">
-        <p class="panel-kicker">SMART CAREER SYSTEM</p>
-        <h2>把职业规划这件事，拆成几步慢慢做清楚。</h2>
+        <p class="panel-kicker">SMART CAREER PLANNING</p>
+        <h2>让计算机专业的成长路径，有据可循。</h2>
         <p class="panel-desc">
-          系统会先理解你的基本信息，再通过能力评估建立画像，随后生成职业推荐，并接入大模型整理成长路径。
+          从个人资料、综合能力到计算机能力画像，系统会把你的课程基础、项目经历、技术兴趣和目标路径串联起来，生成更清晰的方向匹配与年度规划。
         </p>
 
         <div class="feature-list">
@@ -57,7 +57,7 @@
               {{ tipText }}
             </div>
 
-            <button class="submit-btn" type="submit" :disabled="loading">
+            <button class="submit-btn login-submit-btn" type="submit" :disabled="loading">
               {{ loading ? '登录中...' : '登录' }}
             </button>
           </form>
@@ -92,6 +92,9 @@
           />
           <p class="welcome-kicker">WELCOME BACK</p>
           <h2>欢迎回来，{{ userStore.username }}</h2>
+          <button class="logout-btn" type="button" @click="handleLogout">
+            退出登录
+          </button>
         </div>
       </div>
     </div>
@@ -123,23 +126,23 @@ const regTipClass = ref('')
 const featureItems = [
   {
     index: '01',
-    title: '个人信息',
-    desc: '整理专业背景、兴趣偏好、已有技能和职业目标。'
+    title: '学生画像',
+    desc: '整理年级、专业方向、成绩英语、城市偏好和目标倾向。'
   },
   {
     index: '02',
-    title: '能力评估',
-    desc: '从逻辑、创新、沟通、学习等维度生成能力画像。'
+    title: '双维评估',
+    desc: '同时评估综合能力与编程、算法、工程实践等计算机能力。'
   },
   {
     index: '03',
-    title: '职业推荐',
-    desc: '结合个人资料和能力结果，匹配更适合的发展方向。'
+    title: '方向匹配',
+    desc: '匹配后端、前端、AI、数据、安全、测试等技术方向。'
   },
   {
     index: '04',
-    title: '成长规划',
-    desc: '接入大模型规划成长路径，拆解阶段目标和补强任务。'
+    title: '年度规划',
+    desc: '结合推荐路径生成剩余大学阶段的学习、项目和求职安排。'
   }
 ]
 
@@ -180,6 +183,20 @@ const handleAvatarError = (event) => {
 }
 
 const emit = defineEmits(['login-success'])
+
+const handleLogout = () => {
+  userStore.logout()
+  profileAvatar.value = ''
+  loginForm.username = ''
+  loginForm.password = ''
+  regForm.username = ''
+  regForm.password = ''
+  tipText.value = ''
+  tipClass.value = ''
+  regTipText.value = ''
+  regTipClass.value = ''
+  activeMode.value = 'login'
+}
 
 const handleLogin = async () => {
   if (!loginForm.username || !loginForm.password) {
@@ -284,28 +301,30 @@ onMounted(() => {
 }
 
 .panel-kicker {
-  margin: 0 0 18px;
-  color: rgba(63, 79, 92, 0.62);
-  font-size: 13px;
-  letter-spacing: 0.18em;
+  margin: 0 0 16px;
+  color: rgba(35, 55, 76, 0.66);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.2em;
 }
 
 .feature-panel h2 {
-  width: min(500px, 100%);
+  width: min(540px, 100%);
   margin: 0;
-  color: #3f4f5c;
-  font-size: clamp(34px, 4vw, 56px);
-  font-weight: 500;
-  line-height: 1.08;
+  color: #24384c;
+  font-size: clamp(36px, 4vw, 60px);
+  font-weight: 600;
+  line-height: 1.06;
   letter-spacing: 0;
 }
 
 .panel-desc {
-  width: min(520px, 100%);
-  margin: 24px 0 48px;
-  color: #3f4f5c;
-  font-size: 18px;
-  line-height: 1.78;
+  width: min(560px, 100%);
+  margin: 26px 0 50px;
+  color: rgba(36, 56, 76, 0.82);
+  font-size: 17px;
+  line-height: 1.82;
 }
 
 .feature-list {
@@ -320,12 +339,12 @@ onMounted(() => {
   grid-template-columns: 42px minmax(0, 1fr);
   gap: 16px;
   align-items: start;
-  padding-bottom: 18px;
-  border-bottom: 1px solid rgba(63, 79, 92, 0.18);
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(36, 56, 76, 0.16);
 }
 
 .feature-line > span {
-  color: rgba(63, 79, 92, 0.48);
+  color: rgba(36, 56, 76, 0.42);
   font-size: 14px;
   letter-spacing: 0.14em;
   line-height: 1.6;
@@ -334,17 +353,17 @@ onMounted(() => {
 
 .feature-line h3 {
   margin: 0 0 6px;
-  color: #3f4f5c;
-  font-size: 22px;
-  font-weight: 500;
+  color: #24384c;
+  font-size: 21px;
+  font-weight: 600;
   line-height: 1.18;
 }
 
 .feature-line p {
   margin: 0;
-  color: #3f4f5c;
+  color: rgba(36, 56, 76, 0.76);
   font-size: 15px;
-  line-height: 1.7;
+  line-height: 1.68;
 }
 
 .section-divider {
@@ -447,9 +466,10 @@ onMounted(() => {
   width: 118px;
   height: 46px;
   margin-top: auto;
-  margin-bottom: 64px;
-  align-self: start;
-  justify-self: start;
+  margin-bottom: 0;
+  align-self: flex-end;
+  justify-self: end;
+  transform: translate(80px, -40px);
   border: 0;
   background: #3f4f5c;
   color: #ffffff;
@@ -501,6 +521,27 @@ onMounted(() => {
   font-size: clamp(30px, 3.6vw, 46px);
   font-weight: 500;
   line-height: 1.12;
+}
+
+.logout-btn {
+  width: 118px;
+  height: 46px;
+  margin-top: 48px;
+  align-self: flex-end;
+  transform: translate(80px, 90px);
+  border: 1px solid rgba(63, 79, 92, 0.68);
+  background: transparent;
+  color: #3f4f5c;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: #3f4f5c;
+  color: #ffffff;
 }
 
 @media (max-width: 1080px) {
@@ -574,6 +615,9 @@ onMounted(() => {
     width: 100%;
     height: 52px;
     margin-bottom: 0;
+    align-self: stretch;
+    justify-self: stretch;
+    transform: none;
   }
 
   .welcome-panel {
@@ -588,6 +632,14 @@ onMounted(() => {
 
   .welcome-panel h2 {
     font-size: 30px;
+  }
+
+  .logout-btn {
+    width: 100%;
+    height: 52px;
+    margin-top: 34px;
+    align-self: stretch;
+    transform: none;
   }
 }
 </style>

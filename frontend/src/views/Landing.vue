@@ -31,7 +31,7 @@
         <p class="hero-tag">SMART CAREER PLANNING SYSTEM</p>
 
         <h1 class="hero-title">
-          <span class="title-line title-line-1">大学生智能</span>
+          <span class="title-line title-line-1">计算机专业智能</span>
           <span class="title-line title-line-2">职业规划</span>
         </h1>
       </div>
@@ -44,11 +44,18 @@
         <div class="strip strip-2" :style="{ width: strip2Width }"></div>
         <div class="strip strip-3" :style="{ width: strip3Width }"></div>
 
-        <div class="intro-text">
-          我们的智能职业规划平台致力于为大学生提供个性化的职业路径推荐。<br />
-          基于数据分析与智能评估，系统帮助用户识别潜在的发展方向，<br />
-          并结合兴趣、能力、学习表现与职业需求进行综合判断，<br />
-          生成更具针对性的成长建议与发展路径参考。
+        <div class="intro-copy">
+          <p class="intro-kicker">COMPUTER SCIENCE · CAREER PATH</p>
+          <p class="intro-lead">不只是推荐职业，</p>
+          <h2>
+            先看清<span>计算机能力</span><br />
+            再规划<span>成长路径</span>
+          </h2>
+          <p class="intro-desc">
+            系统会结合个人资料、综合能力评估与计算机能力画像，<br />
+            匹配后端、前端、AI、数据、安全等技术方向，<br />
+            再生成大学剩余阶段的年度计划与补强任务。
+          </p>
         </div>
       </div>
     </section>
@@ -73,7 +80,7 @@
     </section>
 
     <!-- 鍔熻兘鍖猴細鍙湁鐧诲綍鍚庢墠鏄剧ず -->
-    <section v-if="userStore.isLogin" class="function-section" ref="functionRef">
+    <section id="functions" v-if="userStore.isLogin" class="function-section" ref="functionRef">
       <div class="function-sticky">
         <div class="function-layout">
           <div class="function-left">
@@ -135,12 +142,13 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, nextTick, onMounted, onBeforeUnmount, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import LoginSection from '../components/LoginSection.vue'
 
 const userStore = useUserStore()
+const route = useRoute()
 const router = useRouter()
 
 const canvasRef = ref(null)
@@ -165,6 +173,17 @@ const handleStageClick = () => {
   if (!cardsExpanded.value) {
     cardsExpanded.value = true
   }
+}
+
+const scrollToFunctions = async () => {
+  if (route.hash !== '#functions' || !userStore.isLogin) return
+
+  cardsExpanded.value = true
+  await nextTick()
+  functionRef.value?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start'
+  })
 }
 
 const goFunctionPage = (item) => {
@@ -306,7 +325,15 @@ const handleLoginSuccess = () => {
 // 鈥斺€斺€斺€斺€斺€斺€斺€斺€斺€?鍒锋柊鑷姩鍏抽棴鍗＄墖 鈥斺€斺€斺€斺€斺€斺€斺€斺€斺€?
 onMounted(() => {
   cardsExpanded.value = false
+  scrollToFunctions()
 })
+
+watch(
+  () => [route.hash, userStore.isLogin],
+  () => {
+    scrollToFunctions()
+  }
+)
 
 /* =========================
    鍔熻兘鍗＄墖鏁版嵁
@@ -315,25 +342,25 @@ const functionCards = [
   {
     title: '个人信息',
     en: 'PROFILE',
-    desc: '整理你的个人背景、专业方向、兴趣偏好和已有技能。',
+    desc: '沉淀年级、专业、兴趣、技能与目标偏好。',
     path: '/profile'
   },
   {
     title: '能力评估',
     en: 'ABILITY',
-    desc: '从多个维度了解你的能力基础与发展优势。',
+    desc: '双维评估综合素质与计算机能力，形成能力画像。',
     path: '/assessment'
   },
   {
     title: '职业规划',
     en: 'CAREER',
-    desc: '结合个人资料与能力画像，匹配适合的职业方向。',
+    desc: '匹配就业、考研、考公、留学路径与职业方向。',
     path: '/career'
   },
   {
     title: '成长规划',
     en: 'PLANNING',
-    desc: '生成技能补强、目标拆解和长期发展的成长路线。',
+    desc: '生成年度学习、项目、材料与补强任务。',
     path: '/planning'
   }
 ]
@@ -503,7 +530,7 @@ onBeforeUnmount(() => {
   position: absolute;
   z-index: 3;
   left: 44px;
-  bottom: 58px;
+  bottom: 98px;
   color: white;
   max-width: 980px;
 }
@@ -526,9 +553,10 @@ onBeforeUnmount(() => {
 
 .title-line {
   display: block;
-  font-size: clamp(78px, 10vw, 150px);
+  font-size: clamp(66px, 8vw, 124px);
   line-height: 0.9;
   letter-spacing: -4px;
+  white-space: nowrap;
 }
 
 .title-line-1 {
@@ -541,18 +569,55 @@ onBeforeUnmount(() => {
   background: #E7E8E4;
 }
 
-.intro-text {
+.intro-copy {
   position: absolute;
   top: 50%;
-  right: 0;
-  width: 40%;
+  right: clamp(28px, 6vw, 96px);
+  width: min(520px, 42%);
   transform: translateY(-50%);
-  color: white;
-  font-family: "Noto Serif SC", serif;
-  font-size: 20px;
-  line-height: 1.8;
-  padding: 0;
+  color: #ffffff;
   z-index: 5;
+}
+
+.intro-kicker {
+  margin: 0 0 22px;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.intro-lead {
+  margin: 0 0 12px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: clamp(17px, 1.45vw, 22px);
+  line-height: 1.2;
+  font-weight: 400;
+}
+
+.intro-copy h2 {
+  margin: 0;
+  font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  font-size: clamp(30px, 3.25vw, 48px);
+  line-height: 1.12;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: #ffffff;
+}
+
+.intro-copy h2 span {
+  font-size: 1.06em;
+  font-weight: 700;
+}
+
+.intro-desc {
+  max-width: 560px;
+  margin: 22px 0 0;
+  font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.82;
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .strip-container {
@@ -950,12 +1015,11 @@ onBeforeUnmount(() => {
   .hero-content {
     left: 28px;
     right: 28px;
-    bottom: 42px;
+    bottom: 82px;
   }
 
-  .intro-text {
+  .intro-copy {
     width: 48%;
-    font-size: 18px;
   }
 
   .unlock-box {
@@ -1002,7 +1066,12 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 768px) {
+  .hero-title {
+    margin: 18px 0 56px;
+  }
+
   .title-line {
+    font-size: clamp(34px, 10.5vw, 54px);
     letter-spacing: -2px;
   }
 
@@ -1026,11 +1095,29 @@ onBeforeUnmount(() => {
     bottom: 180px;
   }
 
-  .intro-text {
-    width: 52%;
+  .intro-copy {
+    right: 18px;
+    width: min(70%, 360px);
+  }
+
+  .intro-kicker {
+    margin-bottom: 10px;
+    font-size: 10px;
+  }
+
+  .intro-lead {
+    margin-bottom: 8px;
     font-size: 14px;
-    line-height: 1.8;
-    padding-right: 12px;
+  }
+
+  .intro-copy h2 {
+    font-size: clamp(23px, 6.4vw, 32px);
+  }
+
+  .intro-desc {
+    margin-top: 14px;
+    font-size: 11px;
+    line-height: 1.65;
   }
 
   .unlock-box {

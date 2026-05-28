@@ -230,6 +230,7 @@ def _build_yearly_plan_input_hash(
 
 
 ACADEMIC_YEARS = ["大一", "大二", "大三", "大四"]
+VALID_PATHS = ["就业", "考研", "考公", "留学"]
 
 
 def _normalize_grade(grade: Optional[object]) -> Optional[str]:
@@ -257,7 +258,7 @@ def _remaining_academic_years(grade: Optional[object]) -> List[str]:
 
 
 def _plan_part_cache_key(selected_path: str, plan_year: str) -> str:
-    path_text = selected_path if selected_path in ["就业", "考研", "考公", "留学"] else "推荐"
+    path_text = selected_path if selected_path in VALID_PATHS else "推荐"
     return f"{path_text}:{plan_year}"
 
 
@@ -413,6 +414,130 @@ Career 推荐结果：
 """
 
 
+def _build_full_yearly_plan_prompt(
+    profile: UserProfile,
+    tech_record: Optional[AssessmentRecord],
+    general_record: Optional[AssessmentRecord],
+    path_record: Optional[CareerPath],
+    careers: List[Career],
+    selected_path: Optional[str],
+    plan_years: List[str],
+) -> str:
+    selected_path_text = _safe_text(selected_path, "未手动选择，默认参考 Career 推荐路径")
+    plan_year_text = "、".join(plan_years)
+    return f"""请一次性生成“{plan_year_text}”的职业成长规划，必须只基于以下系统已保存数据。
+
+输出要求：
+- 不要写成问答，不要输出模型说明。
+- 输出使用纯文本正文，不要使用 Markdown 标题、星号加粗、代码块、表格或 -/* 项目符号。
+- 不要输出总标题、学生信息、学校、年级、专业、本次规划路径、路径说明、数据说明、分隔线或资料摘要。
+- 只生成这些学年：{plan_year_text}，不要增加其他学年。
+- 每个学年开头直接写“某某年度规划”，例如“大二年度规划”，学年之间用一个空行分隔。
+- 每个学年控制在 220 到 320 字，必须包含：年度目标、课程与技术重点、项目或经历、作品与材料产出、风险提醒。
+- 内容要具体、可执行，落到课程、技术、项目、作品、申请材料或面试准备上。
+- 如果学生手动选择的发展路径与 Career 推荐路径不同，要优先尊重“本次选择路径侧重”，同时说明与系统推荐路径的差异。
+- 不能编造 GPA、排名、四六级、雅思托福、实习、项目数量、城市、经济约束、证书。
+
+当前需要生成的学年：{plan_year_text}
+本次选择路径侧重：{selected_path_text}
+
+用户资料：
+- 学校：{_safe_text(profile.school)}
+- 年级：{_safe_text(profile.grade)}
+- 专业：{_safe_text(profile.major)}
+- 兴趣方向：{_safe_text(profile.interest)}
+- 已有技能：{_safe_text(profile.skills)}
+- 目标倾向：{_safe_text(profile.target_preference)}
+- 职业目标：{_safe_text(profile.career_goal)}
+
+能力评估：
+{_format_assessments(tech_record, general_record)}
+
+Career 推荐结果：
+{_format_path_record(path_record)}
+
+推荐职业方向：
+{_format_careers(careers)}
+"""
+
+
+def _active_path_label(selected_path: str, path_record: Optional[CareerPath]) -> str:
+    if selected_path in VALID_PATHS:
+        return selected_path
+    if path_record and path_record.recommend_path:
+        return str(path_record.recommend_path)
+    return "就业"
+
+
+def _career_name_text(careers: List[Career]) -> str:
+    names = [career.career_name for career in careers if career.career_name]
+    return "、".join(names[:3]) if names else "后端、前端、AI、数据等计算机方向"
+
+
+def _build_rule_based_chat_answer(
+    profile: UserProfile,
+    tech_record: Optional[AssessmentRecord],
+    general_record: Optional[AssessmentRecord],
+    path_record: Optional[CareerPath],
+    careers: List[Career],
+    question: str,
+) -> str:
+    path_text = _active_path_label("", path_record)
+    career_text = _career_name_text(careers)
+    assessment_note = "已参考最新能力评估" if tech_record or general_record else "当前缺少能力评估，建议会偏基础"
+
+    return f"""1. 结论
+AI 服务暂时没有完成响应，先按系统已保存资料给你一版本地建议。你当前可以围绕{path_text}路径推进，优先参考{career_text}。
+
+2. 判断依据
+本次只使用你的年级、专业、兴趣、已有技能、目标倾向、Career 推荐结果与能力评估记录；没有填写的信息不参与判断。{assessment_note}，后续补齐资料后判断会更准。
+
+3. 当前短板
+如果目标还不清晰，先不要同时铺太多方向；用一个主攻技术方向、一段可展示项目和一份持续更新的材料包，把能力证据沉淀下来。
+
+4. 1-3 个月行动计划
+选择一个与目标路径贴近的小项目，完成需求、实现、部署或复盘文档；同步整理简历、作品说明和面试题清单。针对你的问题“{question[:60]}”，先拆成本周能完成的一个动作。
+
+5. 风险提醒
+资料不足或路径频繁切换时，规划容易变泛；建议先完成个人资料、综合能力评估和计算机能力评估，再让 AI 服务恢复后生成更细版本。"""
+
+
+def _build_rule_based_yearly_plan(
+    profile: UserProfile,
+    path_text: str,
+    careers: List[Career],
+    plan_years: List[str],
+) -> str:
+    career_text = _career_name_text(careers)
+    path_focus = {
+        "就业": "实习、项目作品、简历和面试准备",
+        "考研": "数学、专业课、英语、复试材料和科研/项目经历",
+        "考公": "行测申论、计算机基础、信息化岗位认知和材料表达",
+        "留学": "语言考试、课程成绩、项目/科研经历和申请文书",
+    }.get(path_text, "课程基础、项目作品、材料整理和阶段复盘")
+
+    year_focus = {
+        "大一": "夯实编程、计算机基础和学习习惯，先做小而完整的课程项目。",
+        "大二": "确定主攻方向，补强数据结构、数据库、前后端或 AI 基础，并形成可展示作品。",
+        "大三": "围绕目标路径强化项目、实习、竞赛、科研或考试准备，沉淀可证明材料。",
+        "大四": "完成求职、升学、考公或申请冲刺，打磨简历、作品集、文书和面试表达。",
+    }
+
+    parts = []
+    for plan_year in plan_years:
+        focus = year_focus.get(plan_year, "围绕目标路径安排课程、项目和材料产出。")
+        parts.append(
+            f"""{plan_year}年度规划
+年度目标：围绕{path_text}路径建立清晰主线，重点放在{path_focus}。结合当前专业、兴趣和技能情况，先把目标压缩到 1 个主方向，参考{career_text}持续校准。
+课程与技术重点：{focus}每周固定复盘一次课程、技术栈和薄弱点，把学习记录转化为可检查的任务。
+项目或经历：至少推进一个能展示能力的项目或经历，保留需求、实现过程、问题解决和结果截图，避免只有零散练习。
+作品与材料产出：维护简历、作品说明、项目仓库或申请材料，把课程基础、技术能力和阶段成果串成证据链。
+风险提醒：不要编造未填写的成绩、证书、实习或项目数量；资料不足时先补齐个人信息和能力评估，再细化下一轮计划。"""
+        )
+
+    return "\n\n".join(parts)
+
+
 @router.post("/chat", response_model=PlanningChatResponse)
 def planning_chat(payload: PlanningChatRequest, db: Session = Depends(get_db)):
     question = payload.question.strip()
@@ -459,17 +584,42 @@ def planning_chat(payload: PlanningChatRequest, db: Session = Depends(get_db)):
     try:
         result = chat_completion(messages, max_tokens=1400)
     except (LLMConfigError, LLMServiceError) as exc:
-        identity = get_llm_identity()
+        fallback_answer = _build_rule_based_chat_answer(
+            profile,
+            tech_record,
+            general_record,
+            path_record,
+            careers,
+            question,
+        )
         return PlanningChatResponse(
-            answer="",
-            provider=identity["provider"],
-            model=identity["model"],
-            success=False,
+            answer=fallback_answer,
+            provider="local",
+            model="rule-fallback",
+            success=True,
             error=str(exc),
         )
 
+    answer = str(result["answer"]).strip()
+    if not answer:
+        answer = _build_rule_based_chat_answer(
+            profile,
+            tech_record,
+            general_record,
+            path_record,
+            careers,
+            question,
+        )
+        return PlanningChatResponse(
+            answer=answer,
+            provider="local",
+            model="rule-fallback",
+            success=True,
+            error="AI 服务返回了空内容，已切换为本地规则建议",
+        )
+
     return PlanningChatResponse(
-        answer=result["answer"],
+        answer=answer,
         provider=result["provider"],
         model=result["model"],
         success=True,
@@ -496,7 +646,7 @@ def planning_yearly_plan(payload: PlanningYearlyPlanRequest, db: Session = Depen
 
     careers_query = db.query(Career).filter(Career.is_active == True)
     selected_path = (payload.selected_path or "").strip()
-    if selected_path in ["就业", "考研", "考公", "留学"]:
+    if selected_path in VALID_PATHS:
         careers_query = careers_query.filter(Career.recommend_path == selected_path)
     elif path_record and path_record.recommend_path:
         careers_query = careers_query.filter(Career.recommend_path == path_record.recommend_path)
@@ -504,104 +654,120 @@ def planning_yearly_plan(payload: PlanningYearlyPlanRequest, db: Session = Depen
     if not careers:
         careers = db.query(Career).filter(Career.is_active == True).limit(3).all()
 
-    plan_parts: List[str] = []
-    created_times = []
-    provider = identity["provider"]
-    model = identity["model"]
-    all_from_cache = True
+    plan_years = _remaining_academic_years(profile.grade)
+    cache_key = _plan_part_cache_key(selected_path, "完整规划")
+    input_hash = _build_yearly_plan_input_hash(
+        profile,
+        tech_record,
+        general_record,
+        path_record,
+        careers,
+        selected_path,
+        "full:" + "|".join(plan_years),
+    )
 
-    for plan_year in _remaining_academic_years(profile.grade):
-        part_cache_key = _plan_part_cache_key(selected_path, plan_year)
-        input_hash = _build_yearly_plan_input_hash(
+    cached_record = (
+        db.query(PlanningYearlyPlanRecord)
+        .filter(
+            PlanningYearlyPlanRecord.user_id == payload.user_id,
+            PlanningYearlyPlanRecord.selected_path == cache_key,
+            PlanningYearlyPlanRecord.input_hash == input_hash,
+        )
+        .order_by(PlanningYearlyPlanRecord.created_at.desc())
+        .first()
+    )
+    if cached_record:
+        return PlanningChatResponse(
+            answer=_clean_yearly_plan_answer(cached_record.answer),
+            provider=cached_record.provider or identity["provider"],
+            model=cached_record.model or identity["model"],
+            success=True,
+            error=None,
+            from_cache=True,
+            created_at=cached_record.created_at,
+        )
+
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {
+            "role": "user",
+            "content": _build_full_yearly_plan_prompt(
+                profile,
+                tech_record,
+                general_record,
+                path_record,
+                careers,
+                selected_path,
+                plan_years,
+            ),
+        },
+    ]
+
+    try:
+        result = chat_completion(messages, max_tokens=2600)
+    except (LLMConfigError, LLMServiceError) as exc:
+        fallback_answer = _build_rule_based_yearly_plan(
             profile,
-            tech_record,
-            general_record,
-            path_record,
+            _active_path_label(selected_path, path_record),
             careers,
-            selected_path,
-            plan_year,
+            plan_years,
         )
-        cached_record = (
-            db.query(PlanningYearlyPlanRecord)
-            .filter(
-                PlanningYearlyPlanRecord.user_id == payload.user_id,
-                PlanningYearlyPlanRecord.selected_path == part_cache_key,
-                PlanningYearlyPlanRecord.input_hash == input_hash,
-            )
-            .order_by(PlanningYearlyPlanRecord.created_at.desc())
-            .first()
+        return PlanningChatResponse(
+            answer=fallback_answer,
+            provider="local",
+            model="rule-fallback",
+            success=True,
+            error=str(exc),
+            from_cache=False,
         )
-        if cached_record:
-            plan_parts.append(_clean_yearly_plan_answer(cached_record.answer))
-            provider = cached_record.provider or provider
-            model = cached_record.model or model
-            created_times.append(cached_record.created_at)
-            continue
 
-        all_from_cache = False
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {
-                "role": "user",
-                "content": _build_yearly_plan_prompt(
-                    profile,
-                    tech_record,
-                    general_record,
-                    path_record,
-                    careers,
-                    selected_path,
-                    plan_year,
-                ),
-            },
-        ]
+    clean_answer = _clean_yearly_plan_answer(result["answer"])
+    if not clean_answer:
+        fallback_answer = _build_rule_based_yearly_plan(
+            profile,
+            _active_path_label(selected_path, path_record),
+            careers,
+            plan_years,
+        )
+        return PlanningChatResponse(
+            answer=fallback_answer,
+            provider="local",
+            model="rule-fallback",
+            success=True,
+            error="AI 服务返回了空内容，已切换为本地规则规划",
+            from_cache=False,
+        )
 
-        try:
-            result = chat_completion(messages, max_tokens=1400)
-        except (LLMConfigError, LLMServiceError) as exc:
-            identity = get_llm_identity()
-            return PlanningChatResponse(
-                answer="",
-                provider=identity["provider"],
-                model=identity["model"],
-                success=False,
-                error=str(exc),
-            )
-
-        clean_answer = _clean_yearly_plan_answer(result["answer"])
-        plan_parts.append(clean_answer)
-        provider = result["provider"]
-        model = result["model"]
-
-        try:
-            plan_record = PlanningYearlyPlanRecord(
-                user_id=payload.user_id,
-                selected_path=part_cache_key,
-                input_hash=input_hash,
-                answer=clean_answer,
-                provider=result["provider"],
-                model=result["model"],
-            )
-            db.add(plan_record)
-            db.commit()
-            db.refresh(plan_record)
-            created_times.append(plan_record.created_at)
-        except Exception as exc:
-            db.rollback()
-            return PlanningChatResponse(
-                answer="\n\n".join(part for part in plan_parts if part),
-                provider=result["provider"],
-                model=result["model"],
-                success=False,
-                error=f"规划已生成，但历史记录保存失败：{exc}",
-                from_cache=False,
-            )
+    try:
+        plan_record = PlanningYearlyPlanRecord(
+            user_id=payload.user_id,
+            selected_path=cache_key,
+            input_hash=input_hash,
+            answer=clean_answer,
+            provider=result["provider"],
+            model=result["model"],
+        )
+        db.add(plan_record)
+        db.commit()
+        db.refresh(plan_record)
+        created_at = plan_record.created_at
+    except Exception as exc:
+        db.rollback()
+        return PlanningChatResponse(
+            answer=clean_answer,
+            provider=result["provider"],
+            model=result["model"],
+            success=True,
+            error=f"规划已生成，但历史记录保存失败：{exc}",
+            from_cache=False,
+        )
 
     return PlanningChatResponse(
-        answer="\n\n".join(part for part in plan_parts if part),
-        provider=provider,
-        model=model,
+        answer=clean_answer,
+        provider=result["provider"],
+        model=result["model"],
         success=True,
         error=None,
-        from_cache=all_from_cache,
-        created_at=max(created_times) if created_times else None,
+        from_cache=False,
+        created_at=created_at,
     )

@@ -14,8 +14,7 @@
           <div class="plan-stamp">
             <label for="planning-path">CURRENT PATH // 当前路径</label>
             <div class="select-wrapper">
-              <select id="planning-path" v-model="selectedPath" :disabled="loading || yearlyPlanLoading" @change="onPathChange">
-                <option value="" disabled>待生成</option>
+              <select id="planning-path" v-model="selectedPath" :disabled="!userStore.isLogin" @change="onPathChange">
                 <option v-for="path in pathOptions" :key="path.value" :value="path.value">
                   {{ path.label }}
                 </option>
@@ -154,12 +153,13 @@ const aiQuestion = ref('')
 const aiError = ref('')
 const chatMessages = ref([])
 const chatDossierRef = ref(null)
-const selectedPath = ref('')
+const selectedPath = ref('就业')
 const selectedPathTouched = ref(false)
 const yearlyPlan = ref('')
 const yearlyPlanLoading = ref(false)
 const yearlyPlanError = ref('')
 const generatedAt = ref('')
+let yearlyPlanRequestId = 0
 
 const pathOptions = [
   { value: '就业', label: '就业' },
@@ -178,7 +178,7 @@ const quickQuestions = [
 const pathResult = computed(() => recommendation.value?.path_result || {})
 
 const activePathLabel = computed(() => {
-  return selectedPath.value || pathResult.value.recommend_path || '待生成'
+  return selectedPath.value || pathResult.value.recommend_path || pathOptions[0].value
 })
 
 const generatedAtText = computed(() => generatedAt.value || new Date().toLocaleString())
@@ -264,23 +264,29 @@ async function loadRecommendation() {
     if (!selectedPathTouched.value && recommendedPath) {
       selectedPath.value = recommendedPath
     }
-    await loadYearlyPlan()
   } catch (err) {
     error.value = err.message || '生成职业规划失败。'
     recommendation.value = null
+    return
   } finally {
     loading.value = false
   }
+
+  await loadYearlyPlan()
 }
 
 async function loadYearlyPlan() {
   if (!userStore.isLogin || !userStore.userId) return
 
+  const requestId = ++yearlyPlanRequestId
+  const pathLabel = activePathLabel.value
   yearlyPlanLoading.value = true
   yearlyPlanError.value = ''
 
   try {
-    const response = await generateYearlyPlanning(userStore.userId, activePathLabel.value)
+    const response = await generateYearlyPlanning(userStore.userId, pathLabel)
+    if (requestId !== yearlyPlanRequestId) return
+
     const data = response.data || response
     if (data.success) {
       yearlyPlan.value = trimYearlyPlanIntro(data.answer) || '暂未形成年度规划。'
@@ -290,10 +296,14 @@ async function loadYearlyPlan() {
       yearlyPlanError.value = data.error || '年度规划暂时无法生成，请稍后重试。'
     }
   } catch (err) {
+    if (requestId !== yearlyPlanRequestId) return
+
     yearlyPlan.value = ''
     yearlyPlanError.value = err.response?.data?.detail || err.message || '年度规划请求失败，请稍后重试。'
   } finally {
-    yearlyPlanLoading.value = false
+    if (requestId === yearlyPlanRequestId) {
+      yearlyPlanLoading.value = false
+    }
   }
 }
 
@@ -450,6 +460,7 @@ watch(
   border: 1px solid #8fa0ad;
   /* 取消模糊和轻柔阴影，改为硬朗的线条感 */
   box-shadow: 8px 8px 0px rgba(38, 61, 79, 0.32);
+  margin-top: 60px;
 }
 
 .plan-header {

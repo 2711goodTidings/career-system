@@ -11,6 +11,8 @@ export const submitAssessment = (answers, userId = null, assessmentType = 'tech'
         answers,
         user_id: userId,
         assessment_type: assessmentType
+    }, {
+        timeout: 300000
     })
 }
 

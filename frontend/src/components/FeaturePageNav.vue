@@ -12,7 +12,7 @@
       <span class="nav-cn">{{ item.label }}</span>
     </button>
 
-    <button class="nav-btn" type="button" @click="go('/')">
+    <button class="nav-btn" type="button" @click="go('/#functions')">
       <span class="nav-en">HOME</span>
       <span class="nav-cn">返回首页</span>
     </button>

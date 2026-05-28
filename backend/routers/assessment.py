@@ -148,8 +148,9 @@ def build_ai_assessment_prompt(
 
 硬性要求：
 - 只使用下面提供的信息，不要编造 GPA、四六级、实习、项目数量、证书或城市。
-- 建议控制在 220 字以内，不要只给一句笼统结论。
+- 建议控制在 120 到 160 字，不要只给一句笼统结论。
 - 结构包含：能力分析、提升重点、下一步行动。
+- 直接输出最终建议，不要寒暄，不要解释生成过程。
 - 输出使用纯文本，不要使用 Markdown 标题、星号加粗、代码块、表格或 -/* 项目符号。
 - 语气专业、具体、可执行，不要泛泛鼓励。
 
@@ -189,7 +190,10 @@ def build_ai_suggestion(
                     "content": "你是专业的计算机专业职业规划助手，必须严格依据用户已提供的数据生成建议，输出纯文本，不要使用 Markdown。",
                 },
                 {"role": "user", "content": prompt},
-            ]
+            ],
+            max_tokens=360,
+            timeout_seconds=60,
+            retry_attempts=3,
         )
     except (LLMConfigError, LLMServiceError) as exc:
         return None, str(exc)
@@ -210,7 +214,42 @@ def build_assessment_suggestion(
     ai_suggestion, ai_error = build_ai_suggestion(assessment_type, raw_scores, overall_level, strongest, weakest, user_id, db)
     if ai_suggestion:
         return ai_suggestion, "ai", ""
-    return build_rule_based_suggestion(assessment_type, raw_scores, strongest, weakest, user_id, db), "rule", ai_error
+    return "AI 建议暂未生成成功，请稍后重新提交评估重试。", "ai_error", ai_error
+
+
+def normalize_answer_signature(answers: Dict[str, int]) -> Dict[str, int]:
+    return {str(key): int(value) for key, value in sorted(answers.items(), key=lambda item: int(item[0]))}
+
+
+def get_cached_assessment_suggestion(
+    user_id: Optional[int],
+    assessment_type: str,
+    clean_answers: Dict[str, int],
+    db: Session,
+) -> Optional[Tuple[str, str]]:
+    if not user_id or not clean_answers:
+        return None
+
+    current_signature = normalize_answer_signature(clean_answers)
+    records = (
+        db.query(AssessmentRecord)
+        .filter(AssessmentRecord.user_id == user_id)
+        .order_by(AssessmentRecord.created_at.desc())
+        .all()
+    )
+
+    for record in records:
+        scores = record.scores if isinstance(record.scores, dict) else {}
+        if scores.get("assessment_type") != assessment_type:
+            continue
+        if scores.get("suggestion_source") not in {"ai", "history_ai"}:
+            continue
+
+        saved_answers = record.answers if isinstance(record.answers, dict) else {}
+        if normalize_answer_signature(saved_answers) == current_signature and record.suggestions:
+            return record.suggestions, "history_ai"
+
+    return None
 
 
 @router.on_event("startup")
@@ -312,19 +351,26 @@ def submit_assessment(submit_data: Dict[str, Any], db: Session = Depends(get_db)
 
     strongest = max(raw_scores.items(), key=lambda item: item[1])
     weakest = min(raw_scores.items(), key=lambda item: item[1])
-    suggestions, suggestion_source, suggestion_error = build_assessment_suggestion(
-        assessment_type,
-        raw_scores,
-        overall_level,
-        strongest,
-        weakest,
-        user_id,
-        db,
-    )
+    cached_suggestion = get_cached_assessment_suggestion(user_id, assessment_type, clean_answers, db)
+    if cached_suggestion:
+        suggestions, suggestion_source = cached_suggestion
+        suggestion_error = ""
+    else:
+        suggestions, suggestion_source, suggestion_error = build_assessment_suggestion(
+            assessment_type,
+            raw_scores,
+            overall_level,
+            strongest,
+            weakest,
+            user_id,
+            db,
+        )
 
     saved_scores = {
         **raw_scores,
         "assessment_type": assessment_type,
+        "suggestion_source": suggestion_source,
+        "suggestion_error": suggestion_error,
     }
     record = AssessmentRecord(
         user_id=user_id,

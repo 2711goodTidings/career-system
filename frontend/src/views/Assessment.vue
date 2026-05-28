@@ -20,7 +20,7 @@
             :class="{ active: assessmentType === item.key }"
             @click="switchAssessmentType(item.key)"
           >
-            <span>{{ item.icon }}</span>{{ item.label }}
+            {{ item.label }}
           </button>
         </div>
 
@@ -95,6 +95,19 @@
             </button>
           </div>
 
+          <div v-if="showGenerationProgress" class="generation-progress" role="status" aria-live="polite">
+            <div class="generation-progress-copy">
+              <span>{{ generationProgress >= 100 ? '评估生成完成' : 'AI 正在生成评估建议' }}</span>
+              <strong>{{ Math.round(generationProgress) }}%</strong>
+            </div>
+            <div class="generation-progress-track" aria-hidden="true">
+              <div
+                class="generation-progress-fill"
+                :style="{ width: `${generationProgress}%` }"
+              ></div>
+            </div>
+          </div>
+
           <section v-if="submitted && result" class="result-view">
             <div class="result-heading">
               <span>{{ activeConfig.resultTitle }}</span>
@@ -159,8 +172,8 @@
                 <span>个性化建议</span>
                 <em>{{ suggestionSourceText }}</em>
               </div>
-              <small v-if="result.suggestion_error" class="suggestion-error">
-                AI 未生成：{{ result.suggestion_error }}
+              <small v-if="suggestionNotice" class="suggestion-error">
+                {{ suggestionNotice }}
               </small>
               <p>{{ plainSuggestion }}</p>
             </div>
@@ -182,7 +195,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { getQuestions, submitAssessment } from '../api/assessment'
 import FeaturePageNav from '../components/FeaturePageNav.vue'
 import { useUserStore } from '../stores/user'
@@ -196,11 +209,14 @@ const submitted = ref(false)
 const result = ref(null)
 const autoSaveMsg = ref('')
 const assessmentType = ref('tech')
+const showGenerationProgress = ref(false)
+const generationProgress = ref(0)
+let generationProgressTimer = null
+const MIN_GENERATION_PROGRESS_MS = 1600
 
 const assessmentTypes = [
   {
     key: 'general',
-    icon: 'GEN',
     label: '综合能力评估',
     title: '综合能力评估',
     resultTitle: '综合能力雷达图',
@@ -208,7 +224,6 @@ const assessmentTypes = [
   },
   {
     key: 'tech',
-    icon: 'CS',
     label: '计算机能力评估',
     title: '计算机能力评估',
     resultTitle: '计算机能力雷达图',
@@ -311,7 +326,20 @@ const plainSuggestion = computed(() => toPlainText(result.value?.suggestions))
 
 const suggestionSourceText = computed(() => {
   if (!result.value) return ''
-  return result.value.suggestion_source === 'ai' ? 'AI 生成' : '规则建议'
+  if (['history', 'history_ai'].includes(result.value.suggestion_source)) return '历史 AI 建议'
+  if (result.value.suggestion_source === 'ai_error') return 'AI 未完成'
+  if (result.value.suggestion_source === 'ai') return 'AI 生成'
+  return 'AI 未完成'
+})
+
+const suggestionNotice = computed(() => {
+  if (result.value.suggestion_source === 'ai_error') {
+    return `AI 建议没有生成成功：${result.value.suggestion_error}`
+  }
+  if (result.value.suggestion_source === 'rule') {
+    return '当前后端仍返回了规则建议，请重启后端后重新提交评估。'
+  }
+  return ''
 })
 
 const radarLevels = [0.25, 0.5, 0.75, 1]
@@ -469,6 +497,42 @@ const loadQuestions = async () => {
   }
 }
 
+const stopGenerationProgress = () => {
+  if (generationProgressTimer) {
+    clearInterval(generationProgressTimer)
+    generationProgressTimer = null
+  }
+}
+
+const startGenerationProgress = () => {
+  stopGenerationProgress()
+  showGenerationProgress.value = true
+  generationProgress.value = 4
+
+  generationProgressTimer = setInterval(() => {
+    if (generationProgress.value < 70) {
+      generationProgress.value += Math.random() * 1.2 + 0.8
+    } else if (generationProgress.value < 90) {
+      generationProgress.value += Math.random() * 0.35 + 0.18
+    }
+
+    generationProgress.value = Math.min(90, generationProgress.value)
+  }, 180)
+}
+
+const finishGenerationProgress = () => {
+  stopGenerationProgress()
+  generationProgress.value = 100
+}
+
+const hideGenerationProgress = () => {
+  stopGenerationProgress()
+  showGenerationProgress.value = false
+  generationProgress.value = 0
+}
+
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
 const handleSubmit = async () => {
   if (!isAllAnswered.value) {
     alert('请回答所有问题')
@@ -476,8 +540,19 @@ const handleSubmit = async () => {
   }
 
   submitting.value = true
+  submitted.value = false
+  result.value = null
+  const startedAt = Date.now()
+  startGenerationProgress()
   try {
     const res = await submitAssessment(answers.value, getCurrentUserId(), assessmentType.value)
+    const elapsed = Date.now() - startedAt
+    if (elapsed < MIN_GENERATION_PROGRESS_MS) {
+      await wait(MIN_GENERATION_PROGRESS_MS - elapsed)
+    }
+    finishGenerationProgress()
+    await wait(220)
+    hideGenerationProgress()
     result.value = res.data
     submitted.value = true
 
@@ -493,6 +568,11 @@ const handleSubmit = async () => {
     } else if (error.message) {
       errorMsg = error.message
     }
+    const elapsed = Date.now() - startedAt
+    if (elapsed < MIN_GENERATION_PROGRESS_MS) {
+      await wait(MIN_GENERATION_PROGRESS_MS - elapsed)
+    }
+    hideGenerationProgress()
     alert(errorMsg)
   } finally {
     submitting.value = false
@@ -500,6 +580,7 @@ const handleSubmit = async () => {
 }
 
 const resetAssessment = () => {
+  hideGenerationProgress()
   submitted.value = false
   result.value = null
 }
@@ -509,14 +590,20 @@ const switchAssessmentType = async (type) => {
   saveAnswersToLocal()
   assessmentType.value = type
   answers.value = {}
+  hideGenerationProgress()
   submitted.value = false
   result.value = null
   await loadQuestions()
 }
 
 watch(assessmentType, () => {
+  hideGenerationProgress()
   submitted.value = false
   result.value = null
+})
+
+onBeforeUnmount(() => {
+  stopGenerationProgress()
 })
 
 onMounted(() => {
@@ -581,16 +668,6 @@ onMounted(() => {
   position: relative;
 }
 
-.paper-heading::after {
-  content: "";
-  position: absolute;
-  right: 205px;
-  bottom: 10px;
-  width: 8px;
-  height: 8px;
-  border: 2px solid #263d4f;
-}
-
 .paper-heading span {
   display: block;
   color: #263d4f;
@@ -602,9 +679,9 @@ onMounted(() => {
 .paper-heading h1 {
   margin: 4px 0 0;
   color: #30485a;
-  font-family: "Microsoft JhengHei Light", "Microsoft YaHei UI Light", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "FangSong", "仿宋", "FangSong_GB2312", "STFangsong", serif;
   font-size: clamp(42px, 7vw, 74px);
-  font-weight: 300;
+  font-weight: 400;
   line-height: 0.9;
   letter-spacing: 0.01em;
   text-align: right;
@@ -644,13 +721,9 @@ onMounted(() => {
   background: rgba(255, 255, 255, 0.26);
   color: #263d4f;
   cursor: pointer;
-  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-  font-size: 14px;
-}
-
-.tab-btn span {
-  font-size: 11px;
-  letter-spacing: 0.08em;
+  font-family: "FangSong", "仿宋", "FangSong_GB2312", "STFangsong", serif;
+  font-size: 16px;
+  font-weight: 400;
 }
 
 .tab-btn.active {
@@ -876,6 +949,45 @@ button {
 .submit-btn:disabled {
   opacity: 0.42;
   cursor: not-allowed;
+}
+
+.generation-progress {
+  width: min(520px, 100%);
+  margin: 18px auto 0;
+  padding: 12px 14px 14px;
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.generation-progress-copy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: #263d4f;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.generation-progress-copy strong {
+  min-width: 42px;
+  text-align: right;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.generation-progress-track {
+  height: 8px;
+  margin-top: 10px;
+  overflow: hidden;
+  background: rgba(143, 160, 173, 0.28);
+}
+
+.generation-progress-fill {
+  height: 100%;
+  width: 0;
+  background: #263d4f;
+  transition: width 0.24s ease;
 }
 
 .result-view {
@@ -1111,12 +1223,6 @@ button {
     text-align: left;
   }
 
-  .paper-heading::after {
-    right: auto;
-    left: 0;
-    bottom: -10px;
-  }
-
   .paper-status {
     justify-content: flex-start;
     margin-top: 18px;
@@ -1160,6 +1266,11 @@ button {
   .score-track {
     grid-column: 1 / -1;
     grid-row: 2;
+  }
+
+  .generation-progress-copy {
+    gap: 10px;
+    font-size: 12px;
   }
 
   .paper-actions {

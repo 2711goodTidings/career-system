@@ -7,7 +7,6 @@ from pydantic import BaseModel, ConfigDict, Field
 class UserRegister(BaseModel):
     username: str
     password: str
-    email: str
 
 class UserLogin(BaseModel):
     username: str
@@ -16,7 +15,6 @@ class UserLogin(BaseModel):
 class UserResponse(BaseModel):
     user_id: int
     username: str
-    email: Optional[str] = None
     created_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
