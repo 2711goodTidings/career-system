@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="planning-page">
     <FeaturePageNav current="planning" />
 
@@ -110,7 +110,7 @@
                 <div class="entry-role">{{ message.role === 'user' ? 'Q.' : 'A.' }}</div>
                 <div class="entry-body">
                   <p>{{ message.content }}</p>
-                  <small v-if="message.meta">{{ message.meta }}</small>
+
                 </div>
               </article>
             </div>
@@ -861,3 +861,4 @@ watch(
   }
 }
 </style>
+
