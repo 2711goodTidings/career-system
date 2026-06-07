@@ -18,9 +18,12 @@
             <div class="profile-cover">
               <div class="page-number">01</div>
               <h1>PROFILE</h1>
-              <div class="avatar-sheet">
-                <img :src="avatarPreview || defaultAvatar" alt="avatar" />
-                <label class="avatar-upload">
+              <div class="avatar-group">
+                <div class="avatar-sheet">
+                  <img :src="avatarPreview || defaultAvatar" alt="avatar" />
+                </div>
+                <label class="profile-action-btn avatar-upload">
+                  <span class="avatar-upload-text">更新头像</span>
                   更换头像
                   <input
                     class="hidden-input"
@@ -175,7 +178,7 @@
           <span>PROFILE COMPLETION</span>
           <strong>{{ profileCompletion }}%</strong>
         </div>
-        <button type="button" class="save-btn" :disabled="isSaving" @click="handleSubmit">
+        <button type="button" class="profile-action-btn save-btn" :disabled="isSaving" @click="handleSubmit">
           {{ isSaving ? '保存中...' : '保存档案' }}
         </button>
       </div>
@@ -553,11 +556,18 @@ onMounted(() => {
   z-index: 5;
 }
 
-.avatar-sheet {
+.avatar-group {
   width: 410px;
   height: 500px;
-  background: #7ea0c7;
   transform: translateX(58px);
+  position: relative;
+  z-index: 2;
+}
+
+.avatar-sheet {
+  width: 100%;
+  height: 100%;
+  background: #7ea0c7;
   position: relative;
   z-index: 2;
   box-shadow: 0 14px 26px rgba(0, 0, 0, 0.18);
@@ -572,21 +582,78 @@ onMounted(() => {
   opacity: 0.88;
 }
 
+.profile-action-btn {
+  min-width: 132px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 18px;
+  border: 1px solid rgba(241, 238, 231, 0.92);
+  background: transparent;
+  color: #f1eee7;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 1px;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 0;
+  text-decoration: none;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.profile-action-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: #93A4C1;
+  background: transparent;
+  color: #f1eee7;
+}
+
+.profile-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .avatar-upload {
   position: absolute;
-  right: 18px;
-  bottom: 16px;
-  color: #111517;
-  border: none;
-  padding: 0;
-  font-size: 11px;
-  cursor: pointer;
-  background: transparent;
+  left: 50%;
+  top: calc(100% + 20px);
+  transform: translateX(-50%);
+  z-index: 4;
+  font-size: 0;
   text-shadow: none;
+  white-space: nowrap;
+}
+
+.avatar-upload:hover:not(:disabled) {
+  transform: translateX(-50%) translateY(-1px);
+}
+
+.avatar-upload::before {
+  content: "更新头像";
+  font-size: 14px;
 }
 
 .hidden-input {
   display: none;
+}
+
+.avatar-upload {
+  margin-top: 0;
+}
+
+.avatar-upload-text {
+  font-size: 14px;
+  display: inline-block;
+  position: relative;
+  z-index: 5;
+  color: #263d4f !important;
+}
+
+.avatar-upload::before {
+  content: none;
 }
 
 .page-number {
@@ -830,31 +897,25 @@ textarea::placeholder {
 }
 
 .save-btn {
-  border: 0;
+  border-color: rgba(241, 238, 231, 0.92);
   background: transparent;
   color: #f1eee7;
-  padding: 6px 2px 8px;
-  font-size: 13px;
-  cursor: pointer;
-  letter-spacing: 1px;
-  font-weight: 700;
-  text-decoration-line: underline;
-  text-decoration-style: dashed;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 6px;
-  transition: transform 0.2s ease, color 0.2s ease, text-decoration-color 0.2s ease;
+  font-size: 0;
 }
 
-.save-btn:hover {
-  transform: translateY(-1px);
-  color: #ffffff;
-  text-decoration-color: rgba(255, 255, 255, 0.9);
+.save-btn::before {
+  content: "保存档案";
+  font-size: 14px;
 }
 
-.save-btn:disabled {
-  opacity: 0.48;
-  cursor: not-allowed;
-  transform: none;
+.save-btn:disabled::before {
+  content: "保存中...";
+}
+
+.save-btn:hover:not(:disabled) {
+  border-color: #93A4C1;
+  background: transparent;
+  color: #f1eee7;
 }
 
 .completion-box {

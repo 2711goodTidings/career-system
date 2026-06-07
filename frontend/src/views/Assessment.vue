@@ -954,8 +954,8 @@ button {
 .generation-progress {
   width: min(520px, 100%);
   margin: 18px auto 0;
-  padding: 12px 14px 14px;
-  background: rgba(255, 255, 255, 0.26);
+  padding: 0;
+  background: transparent;
 }
 
 .generation-progress-copy {
@@ -980,7 +980,7 @@ button {
   height: 8px;
   margin-top: 10px;
   overflow: hidden;
-  background: rgba(143, 160, 173, 0.28);
+  background: transparent;
 }
 
 .generation-progress-fill {

@@ -46,6 +46,14 @@
               <span class="kicker-text">YEARLY ROADMAP</span>
               <h2>年度规划</h2>
               <p>依据个人资料、能力评估、职业推荐和当前路径侧重生成。</p>
+              <button
+                v-if="yearlyPlan && !yearlyPlanLoading && !yearlyPlanError"
+                class="sharp-btn-outline export-plan-btn"
+                type="button"
+                @click="exportYearlyPlanPdf"
+              >
+                导出 PDF
+              </button>
             </div>
 
             <div v-if="yearlyPlanLoading" class="yearly-loading">
@@ -56,7 +64,23 @@
             <p v-else-if="yearlyPlanError" class="yearly-error">{{ yearlyPlanError }}</p>
 
             <article v-else class="yearly-paper">
-              {{ yearlyPlan || '暂未形成年度规划。' }}
+              <template v-if="yearlyPlan">
+                <p
+                  v-for="(line, index) in formattedYearlyPlanLines"
+                  :key="`${index}_${line.text}`"
+                  class="yearly-line"
+                  :class="{
+                    'yearly-line-heading': line.isHeading,
+                    'yearly-line-blank': line.isBlank
+                  }"
+                >
+                  <template v-for="(part, partIndex) in line.parts" :key="partIndex">
+                    <strong v-if="part.bold">{{ part.text }}</strong>
+                    <span v-else>{{ part.text }}</span>
+                  </template>
+                </p>
+              </template>
+              <template v-else>暂未形成年度规划。</template>
             </article>
           </section>
 
@@ -74,8 +98,19 @@
       <section class="consultation-panel">
         <div class="panel-inner">
           <div class="section-head">
-            <span class="kicker-text">PLANNING INQUIRY</span>
-            <h2>规划问答</h2>
+            <div>
+              <span class="kicker-text">PLANNING INQUIRY</span>
+              <h2>规划问答</h2>
+            </div>
+            <button
+              v-if="userStore.isLogin"
+              class="clear-chat-btn"
+              type="button"
+              :disabled="aiLoading || !chatMessages.length"
+              @click="clearChatHistory"
+            >
+              清空历史
+            </button>
           </div>
 
           <section v-if="!userStore.isLogin" class="notice consultation-notice">
@@ -183,6 +218,12 @@ const activePathLabel = computed(() => {
 
 const generatedAtText = computed(() => generatedAt.value || new Date().toLocaleString())
 
+const formattedYearlyPlanLines = computed(() => {
+  return String(yearlyPlan.value || '')
+    .split('\n')
+    .map(line => formatYearlyPlanLine(line))
+})
+
 const coverDescription = computed(() => {
   if (!userStore.isLogin) return '登录后即可生成专属职业成长路线。'
   if (loading.value) return '正在整理你的规划档案。'
@@ -198,6 +239,39 @@ function toPlainText(text) {
     .replace(/`{1,3}/g, '')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
+}
+
+function isYearlyHeading(line) {
+  const text = String(line || '').trim()
+  return /^(?:[一二三四五六七八九十]+[、.．]\s*)?(?:大一|大二|大三|大四|研一|研二|当前学年|本学年|剩余学年|毕业前).{0,12}(?:年度规划|阶段规划|规划|计划|安排)$/.test(text)
+}
+
+function formatYearlyPlanLine(line) {
+  const text = String(line || '')
+  const isBlank = !text.trim()
+  const isHeading = isYearlyHeading(text)
+  const targetKeyword = '年度目标'
+  const keywordIndex = text.indexOf(targetKeyword)
+
+  if (keywordIndex === -1) {
+    return {
+      text,
+      isBlank,
+      isHeading,
+      parts: [{ text, bold: false }]
+    }
+  }
+
+  return {
+    text,
+    isBlank,
+    isHeading,
+    parts: [
+      { text: text.slice(0, keywordIndex), bold: false },
+      { text: targetKeyword, bold: true },
+      { text: text.slice(keywordIndex + targetKeyword.length), bold: false }
+    ].filter(part => part.text)
+  }
 }
 
 function trimYearlyPlanIntro(text) {
@@ -343,6 +417,17 @@ function saveChatMessages() {
   localStorage.setItem(getChatStorageKey(), JSON.stringify(chatMessages.value.slice(-30)))
 }
 
+function clearChatHistory() {
+  if (!userStore.userId || aiLoading.value || !chatMessages.value.length) return
+
+  const confirmed = window.confirm('确定清空当前账号的规划问答历史吗？')
+  if (!confirmed) return
+
+  chatMessages.value = []
+  aiError.value = ''
+  localStorage.removeItem(getChatStorageKey())
+}
+
 function appendChatMessage(role, content, meta = '') {
   chatMessages.value.push({
     id: `${Date.now()}_${Math.random().toString(16).slice(2)}`,
@@ -352,6 +437,142 @@ function appendChatMessage(role, content, meta = '') {
   })
   saveChatMessages()
   scrollChatToBottom()
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function renderFormattedPlanHtml(text) {
+  return String(text || '')
+    .split('\n')
+    .map(line => formatYearlyPlanLine(line))
+    .map(line => {
+      const content = line.parts
+        .map(part => (part.bold ? `<strong>${escapeHtml(part.text)}</strong>` : escapeHtml(part.text)))
+        .join('')
+      const className = [
+        'plan-line',
+        line.isHeading ? 'plan-heading' : '',
+        line.isBlank ? 'plan-blank' : ''
+      ].filter(Boolean).join(' ')
+      return `<p class="${className}">${content || '&nbsp;'}</p>`
+    })
+    .join('')
+}
+
+function exportYearlyPlanPdf() {
+  if (!yearlyPlan.value) return
+
+  const title = 'SmartCareerPlanning 职业成长规划书'
+  const path = activePathLabel.value || '未选择'
+  const generated = generatedAtText.value
+  const planHtml = renderFormattedPlanHtml(yearlyPlan.value)
+  const printWindow = window.open('', '_blank', 'width=900,height=720')
+
+  if (!printWindow) {
+    yearlyPlanError.value = '浏览器阻止了导出窗口，请允许弹出窗口后重试。'
+    return
+  }
+
+  printWindow.document.write(`
+    <!doctype html>
+    <html lang="zh-CN">
+      <head>
+        <meta charset="utf-8" />
+        <title>${escapeHtml(title)}</title>
+        <style>
+          @page { size: A4; margin: 22mm 18mm; }
+          * { box-sizing: border-box; }
+          body {
+            margin: 0;
+            color: #263d4f;
+            font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+            background: #ffffff;
+          }
+          .cover {
+            padding-bottom: 18px;
+            margin-bottom: 26px;
+            border-bottom: 3px solid #263d4f;
+          }
+          .kicker {
+            margin: 0 0 10px;
+            color: #496274;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+          }
+          h1 {
+            margin: 0;
+            font-family: "SimSun", "Microsoft YaHei", serif;
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1.3;
+          }
+          .meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 18px;
+            margin-top: 18px;
+            padding-top: 12px;
+            border-top: 1px solid #a9b8c3;
+            color: #496274;
+            font-size: 12px;
+          }
+          .plan {
+            white-space: pre-wrap;
+            color: #30485a;
+            font-size: 13.5px;
+            line-height: 1.9;
+          }
+          .plan-line {
+            margin: 0;
+            white-space: pre-wrap;
+          }
+          .plan-heading {
+            margin-top: 22px;
+            margin-bottom: 14px;
+            color: #263d4f;
+            font-size: 19px;
+            font-weight: 800;
+            line-height: 1.45;
+          }
+          .plan-heading:first-child {
+            margin-top: 0;
+          }
+          .plan-blank {
+            min-height: 10px;
+          }
+          strong {
+            color: #263d4f;
+            font-weight: 800;
+          }
+        </style>
+      </head>
+      <body>
+        <section class="cover">
+          <p class="kicker">SMART CAREER PLANNING SYSTEM</p>
+          <h1>${escapeHtml(title)}</h1>
+          <div class="meta">
+            <span>当前路径：${escapeHtml(path)}</span>
+            <span>生成时间：${escapeHtml(generated)}</span>
+          </div>
+        </section>
+        <main class="plan">${planHtml}</main>
+      </body>
+    </html>
+  `)
+  printWindow.document.close()
+  printWindow.focus()
+
+  setTimeout(() => {
+    printWindow.print()
+  }, 250)
 }
 
 async function sendQuestion(presetQuestion = '') {
@@ -618,6 +839,12 @@ watch(
   line-height: 1.6;
 }
 
+.export-plan-btn {
+  display: block;
+  width: fit-content;
+  margin: 18px 0 0 0;
+}
+
 .yearly-loading {
   min-height: 300px;
   display: flex;
@@ -636,7 +863,39 @@ watch(
   font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 15px;
   line-height: 2;
+}
+
+.yearly-line {
+  min-height: 1em;
+  margin: 0;
   white-space: pre-wrap;
+}
+
+.yearly-line + .yearly-line {
+  margin-top: 2px;
+}
+
+.yearly-line-heading {
+  margin-top: 28px;
+  margin-bottom: 18px;
+  color: #263d4f;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.yearly-line-heading:first-child {
+  margin-top: 0;
+}
+
+.yearly-line-blank {
+  min-height: 12px;
+  margin-top: 0;
+}
+
+.yearly-line strong {
+  color: #263d4f;
+  font-weight: 800;
 }
 
 .plan-footer {
@@ -661,11 +920,42 @@ watch(
   padding: 48px;
 }
 
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
 .section-head h2 {
   margin: 12px 0 32px;
   color: #263d4f;
   font-size: 32px;
   font-weight: 600;
+}
+
+.clear-chat-btn {
+  margin-top: 4px;
+  padding: 8px 14px;
+  border: 1px solid #8fa0ad;
+  background: transparent;
+  color: #30485a;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 0;
+  transition: all 0.2s ease;
+}
+
+.clear-chat-btn:hover:not(:disabled) {
+  border-color: #263d4f;
+  background: #263d4f;
+  color: #ffffff;
+}
+
+.clear-chat-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .notice {
